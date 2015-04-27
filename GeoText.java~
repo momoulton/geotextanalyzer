@@ -1,0 +1,55 @@
+// File: GeoText.java
+// Mo Moulton
+// CSciE10b Final Project
+// TF David Habermehl
+// 8 May 2015
+
+/** 
+ *  This class run the program GeoText Analysis. It invites the user to load
+ * a plain-text file, then process and analyzes that file. Users can add to the
+ * pre-loaded dictionary of geographical place names included in the analysis.
+ *
+ * @author: Mo Moulton
+ * @version: 8 May 2015
+**/
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+
+public class GeoText {
+	
+	public static void main(String[] args)
+	{
+		Window window = new Window();
+		window.setVisible(true);
+	}
+	
+}
+
+class Window extends JFrame {
+	
+	public Window()
+	{
+		do_layout();
+		do_plumbing();
+	}
+	
+	private void do_layout()
+	{
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+		this.setTitle("GeoText Analyzer");
+		this.setLocationRelativeTo(null);
+		this.setSize(500,500);
+		this.setLayout(new GridLayout(4,1));
+	}
+	
+	private void do_plumbing()
+	{
+		int y = 0;
+	}
+	
+}
+
+
