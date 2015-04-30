@@ -37,6 +37,10 @@ class Window extends JFrame {
 	String year = null;
 	ArrayList<String> allWords = new ArrayList<String>();
 	ArrayList<String> procWords = new ArrayList<String>();
+	ArrayList<String> uniqueWords = new ArrayList<String>();
+	String[][] wordCounter;
+	int totalWords = 0;
+	int uniqueWordTotal = 0;
 	
 	JPanel headerPanel = new JPanel();
 	JLabel greeting = new JLabel("Welcome to the GeoText Analyzer!");
@@ -146,6 +150,10 @@ class Window extends JFrame {
 		else
 		{
 			allWords = readData(file);
+			procWords = processWords(allWords);
+			uniqueWords = getUnique(procWords);
+			totalWords = procWords.size();
+			uniqueWordTotal = uniqueWords.size();
 			
 			if (allWords.size() == 0)
 			{
@@ -156,8 +164,6 @@ class Window extends JFrame {
 				DataWindow dataWindow = new DataWindow();
 				dataWindow.setVisible(true);
 			}
-			
-			procWords = processWords(allWords);
 		}
 	}
 	
@@ -211,44 +217,35 @@ class Window extends JFrame {
 			
 			letterWord = "";
 		}
-		
-		
-		if (procWords.size() > 20) 
+
+		return procWords;	
+	}
+	
+	private ArrayList<String> getUnique(ArrayList<String> procWords)
+	{
+		for (String word : procWords)
 		{
-			System.out.println(procWords.get(0));
-			System.out.println(procWords.get(1));
-			System.out.println(procWords.get(2));
-			System.out.println(procWords.get(3));
-			System.out.println(procWords.get(4));
-			System.out.println(procWords.get(5));
-			System.out.println(procWords.get(6));
-			System.out.println(procWords.get(7));
-			System.out.println(procWords.get(8));
-			System.out.println(procWords.get(9));
-			System.out.println(procWords.get(10));
-			System.out.println(procWords.get(11));
-			System.out.println(procWords.get(12));
-			System.out.println(procWords.get(13));
-			System.out.println(procWords.get(14));
-			System.out.println(procWords.get(15));
+			if (!uniqueWords.contains(word))
+			{
+				uniqueWords.add(word);
+			}
 		}
-		return procWords;
 		
-		
+		return uniqueWords;
 	}
 
+	
 class DataWindow extends JFrame {
 	
 	String title = "File: " + filename + "   Date: " + year;
-	String total = null;
-	String unique = null;
-	String average = null;
 	PlaceDictionary<Place> placeDictionary = new PlaceDictionary<Place>();	
 	
 	JPanel textPanel = new JPanel();
 	JLabel textLabel = new JLabel("Text Analysis");
 	JLabel totalLabel = new JLabel("Total Words: ");
-	JLabel totalWords = new JLabel(total);
+	JLabel totalWordsLabel = new JLabel(Integer.toString(totalWords));
+	JLabel uniqueLabel = new JLabel("Unique Words: ");
+	JLabel uniqueWordsLabel = new JLabel(Integer.toString(uniqueWordTotal));
 	
 	JPanel freqPanel = new JPanel();
 	JButton findButton = new JButton("Find Frequency");
@@ -279,7 +276,7 @@ class DataWindow extends JFrame {
 	{
 		do_layout();
 		do_plumbing();
-		readData(file);
+		//readData(file);
 	}
 	
 	private void do_layout()
@@ -287,6 +284,19 @@ class DataWindow extends JFrame {
 		textPanel.setLayout(new BorderLayout());
 		textPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		textPanel.add(textLabel, BorderLayout.PAGE_START);
+		JPanel totalPanel = new JPanel();
+		totalPanel.setLayout(new FlowLayout());
+		totalPanel.add(totalLabel);
+		totalPanel.add(totalWordsLabel);
+		JPanel uniquePanel = new JPanel();
+		uniquePanel.setLayout(new FlowLayout());
+		uniquePanel.add(uniqueLabel);
+		uniquePanel.add(uniqueWordsLabel);
+		JPanel dataPanel = new JPanel();
+		dataPanel.setLayout(new GridLayout(0,2));
+		dataPanel.add(totalPanel);
+		dataPanel.add(uniquePanel);
+		textPanel.add(dataPanel, BorderLayout.CENTER);
 		
 		wordFind.setLayout(new GridLayout(1,3));
 		wordFind.add(findWordLabel);
