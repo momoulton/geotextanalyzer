@@ -35,13 +35,15 @@ class Window extends JFrame {
 	String filename = null;
 	File file = null;
 	String year = null;
+	ArrayList<String> allWords = new ArrayList<String>();
+	ArrayList<String> procWords = new ArrayList<String>();
 	
 	JPanel headerPanel = new JPanel();
 	JLabel greeting = new JLabel("Welcome to the GeoText Analyzer!");
 	
 	JPanel onePanel = new JPanel();
 	JLabel chooseLabel = 
-		new JLabel("First, choose a text to analyze. Must be plaintext (.txt). ");
+		new JLabel("First, choose a text to analyze. Must be plaintext (.txt). The Analyzer will look at ALL text in the file. You may wish to remove header and footer material first. ");
 	JButton browseButton = new JButton("Browse");
 	JPanel filePanel = new JPanel();
 	JLabel fileLabel = new JLabel("File: ");
@@ -143,13 +145,97 @@ class Window extends JFrame {
 		}
 		else
 		{
-			DataWindow dataWindow = new DataWindow();
-			dataWindow.setVisible(true);
+			allWords = readData(file);
 			
-		
+			if (allWords.size() == 0)
+			{
+				JOptionPane.showMessageDialog(null, "The file can't be read. Please try again.");
+			}
+			else
+			{
+				DataWindow dataWindow = new DataWindow();
+				dataWindow.setVisible(true);
+			}
+			
+			procWords = processWords(allWords);
 		}
 	}
-
+	
+	private ArrayList<String> readData(File file)
+	{
+		Scanner inFile = null;
+		ArrayList<String> allWords = new ArrayList<String>();
+		
+		try
+		{
+			inFile = new Scanner(file);
+		}
+		catch (IOException e)
+		{
+			JOptionPane.showMessageDialog(null, "There's a problem with the file. Please try again.");
+		}
+		
+		while (inFile.hasNext())
+		{
+			allWords.add(inFile.next());
+		}
+		
+		return allWords;
+	}
+	
+	private ArrayList<String> processWords(ArrayList<String> allWords)
+	{
+		String letterWord = "";
+		ArrayList<String> lowWords = new ArrayList<String>();
+		
+		for (String word : allWords)
+		{
+			String lowerWord = word.toLowerCase();
+			lowWords.add(lowerWord);
+		}
+		
+		for (String word: lowWords)
+		{
+			for (int i = 0; i < word.length(); i++)
+			{
+				if (Character.isLetterOrDigit(word.charAt(i)))
+				{
+					letterWord = letterWord + word.charAt(i);
+				}
+			}
+			
+			if (letterWord.length() > 0)
+			{
+				procWords.add(letterWord);
+			}
+			
+			letterWord = "";
+		}
+		
+		
+		if (procWords.size() > 20) 
+		{
+			System.out.println(procWords.get(0));
+			System.out.println(procWords.get(1));
+			System.out.println(procWords.get(2));
+			System.out.println(procWords.get(3));
+			System.out.println(procWords.get(4));
+			System.out.println(procWords.get(5));
+			System.out.println(procWords.get(6));
+			System.out.println(procWords.get(7));
+			System.out.println(procWords.get(8));
+			System.out.println(procWords.get(9));
+			System.out.println(procWords.get(10));
+			System.out.println(procWords.get(11));
+			System.out.println(procWords.get(12));
+			System.out.println(procWords.get(13));
+			System.out.println(procWords.get(14));
+			System.out.println(procWords.get(15));
+		}
+		return procWords;
+		
+		
+	}
 
 class DataWindow extends JFrame {
 	
@@ -189,10 +275,11 @@ class DataWindow extends JFrame {
 	JTextArea latArea = new JTextArea();
 	JTextArea longArea = new JTextArea();
 		
-public DataWindow()
+	public DataWindow()
 	{
 		do_layout();
 		do_plumbing();
+		readData(file);
 	}
 	
 	private void do_layout()
@@ -394,8 +481,8 @@ public DataWindow()
 	}
 	
 }
-
 }
+
 
 class Place {
 	
