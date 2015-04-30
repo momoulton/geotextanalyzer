@@ -18,9 +18,10 @@ import javax.swing.filechooser.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.*;
 
 public class GeoText {
-	
+		
 	public static void main(String[] args)
 	{
 		Window window = new Window();
@@ -132,21 +133,320 @@ class Window extends JFrame {
 	{
 		year = yearArea.getText();
 		
-		if (year == null)
+		if (file == null || filename == null)
 		{
-			this.showMessageDialog(null, "Please enter a date value.");
+			JOptionPane.showMessageDialog(null, "You haven't entered a file. Try again.");
 		}
-		else if (!f.exists())
+		else if (!file.exists())
 		{
-			this.showMessageDialog(null, "That file doesn't exist. Try again.");
+			JOptionPane.showMessageDialog(null, "That file doesn't exist. Try again.");
 		}
 		else
 		{
 			DataWindow dataWindow = new DataWindow();
 			dataWindow.setVisible(true);
+			
+		
+		}
+	}
+
+
+class DataWindow extends JFrame {
+	
+	String title = "File: " + filename + "   Date: " + year;
+	String total = null;
+	String unique = null;
+	String average = null;
+	PlaceDictionary<Place> placeDictionary = new PlaceDictionary<Place>();	
+	
+	JPanel textPanel = new JPanel();
+	JLabel textLabel = new JLabel("Text Analysis");
+	JLabel totalLabel = new JLabel("Total Words: ");
+	JLabel totalWords = new JLabel(total);
+	
+	JPanel freqPanel = new JPanel();
+	JButton findButton = new JButton("Find Frequency");
+	JLabel freqLabel = new JLabel("Word Frequencies");
+	JLabel findWordLabel = new JLabel("Word: ");
+	JTextArea findWordArea = new JTextArea();
+	JTextArea wordResults = new JTextArea("Results will go here");
+	JPanel wordFind = new JPanel();
+	
+	JPanel geoPanel = new JPanel();
+	JLabel geoLabel = new JLabel("Place Name Analysis");
+	JButton runGeo = new JButton("Run Analysis");
+	JTextArea geoData = new JTextArea("Results will go here");
+	JButton saveGeo = new JButton("Save As Comma-Separated-Variable (CSV) File");
+	
+	JPanel dictPanel = new JPanel();
+	JLabel dictLabel = new JLabel("Customize the Place Name Dictionary");
+	JButton addButton = new JButton("Add this place");
+	JButton delButton = new JButton("Delete this place");
+	JLabel nameField = new JLabel("Place Name: ");
+	JLabel latField = new JLabel("Latitude: ");
+	JLabel longField = new JLabel("Longitude: ");
+	JTextArea nameArea = new JTextArea();
+	JTextArea latArea = new JTextArea();
+	JTextArea longArea = new JTextArea();
+		
+public DataWindow()
+	{
+		do_layout();
+		do_plumbing();
+	}
+	
+	private void do_layout()
+	{	
+		textPanel.setLayout(new BorderLayout());
+		textPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		textPanel.add(textLabel, BorderLayout.PAGE_START);
+		
+		wordFind.setLayout(new GridLayout(1,3));
+		wordFind.add(findWordLabel);
+		wordFind.add(findWordArea);
+		wordFind.add(findButton);
+		
+		freqPanel.setLayout(new BorderLayout());
+		freqPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		freqPanel.add(freqLabel, BorderLayout.PAGE_START);
+		freqPanel.add(wordFind, BorderLayout.CENTER);
+		freqPanel.add(wordResults, BorderLayout.PAGE_END);
+		
+		geoPanel.setLayout(new BorderLayout());
+		geoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		geoPanel.add(geoLabel, BorderLayout.PAGE_START);
+		geoPanel.add(runGeo, BorderLayout.LINE_END);
+		geoPanel.add(geoData, BorderLayout.CENTER);
+		geoPanel.add(saveGeo, BorderLayout.PAGE_END);
+		
+		dictPanel.setLayout(new BorderLayout());
+		dictPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		JPanel enterAddData = new JPanel();
+		enterAddData.setLayout(new GridLayout(4,2));
+		enterAddData.add(nameField);
+		enterAddData.add(nameArea);
+		enterAddData.add(latField);
+		enterAddData.add(latArea);
+		enterAddData.add(longField);
+		enterAddData.add(longArea);
+		enterAddData.add(addButton);
+		enterAddData.add(delButton);
+		dictPanel.add(dictLabel, BorderLayout.PAGE_START);
+		dictPanel.add(enterAddData, BorderLayout.CENTER);
+		
+		this.setTitle(title);
+		this.setSize(500,500);
+		this.setLocationRelativeTo(null);
+		this.setLayout(new GridLayout(2,2));
+		
+		this.add(textPanel);
+		this.add(freqPanel);
+		this.add(geoPanel);
+		this.add(dictPanel);
+		
+	}
+	
+	private void do_plumbing()
+	{
+		findButton.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					find_clicked();
+				}
+		} );
+		
+		runGeo.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					runGeo_clicked();
+				}
+		} );
+		
+		saveGeo.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					saveGeo_clicked();
+				}
+		} );
+		
+		addButton.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					add_clicked();
+				}
+		} );
+		
+		delButton.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					del_clicked();
+				}
+		} );	
+	}
+	
+	private void find_clicked()
+	{
+		System.out.println("Find Frequency Clicked");
+	}
+	
+	private void runGeo_clicked()
+	{
+		System.out.println("Run GeoAnalysis Clicked");
+	}
+	
+	private void saveGeo_clicked()
+	{
+		System.out.println("Save GeoAnalysis Clicked");
+	}
+	
+	private void add_clicked()
+	{	
+		String name = null;
+		double latitude = 0;
+		double longitude = 0;
+		Place newplace = null;
+		
+		if (nameArea.getText().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
+		{
+			JOptionPane.showMessageDialog(null, "Please enter values for all fields.");
+		}
+		else
+		{
+			try 
+			{
+				name = nameArea.getText();
+				latitude = Double.parseDouble(latArea.getText());
+				longitude = Double.parseDouble(longArea.getText());
+				newplace = new Place(name, latitude, longitude);
+			}
+			catch (NumberFormatException e)
+			{
+				JOptionPane.showMessageDialog(null, "Please enter numbers only for latitude and longitude.");
+			}
+			
+			int count = 0;
+			
+			for (Place place : placeDictionary)
+			{
+				if (newplace.equals(place)) count++;
+			}
+			
+			if (count == 0)
+			{
+				placeDictionary.add(newplace);
+				JOptionPane.showMessageDialog(null, "Added to dictionary: " + newplace);
+				nameArea.setText("");
+				latArea.setText("");
+				longArea.setText("");	
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(null, "That place is already in the dictionary. Note: place names must be unique.");
+			}
+			
+			System.out.println(placeDictionary);
 		}
 	}
 	
+	private void del_clicked()
+	{
+		String name = null;
+		double latitude = 0;
+		double longitude = 0;
+		Place newplace = null;
+		
+		if (nameArea.getText().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
+		{
+			JOptionPane.showMessageDialog(null, "Please enter values for all fields.");
+		}
+		else
+		{
+			try 
+			{
+				name = nameArea.getText();
+				latitude = Double.parseDouble(latArea.getText());
+				longitude = Double.parseDouble(longArea.getText());
+				newplace = new Place(name, latitude, longitude);
+			}
+			catch (NumberFormatException e)
+			{
+				JOptionPane.showMessageDialog(null, "Please enter numbers only for latitude and longitude.");
+			}
+			
+			int count = 0;
+			
+			for (Place place : placeDictionary)
+			{
+				if (newplace.equals(place))
+				{
+					count++;
+					placeDictionary.remove(place);
+					JOptionPane.showMessageDialog(null, "Removed dictionary: " + place);
+					nameArea.setText("");
+					latArea.setText("");
+					longArea.setText("");
+				}
+			}
+			
+			if (count == 0)
+			{
+			
+				JOptionPane.showMessageDialog(null, "That place is not in the dictionary.");
+			}
+			
+			System.out.println(placeDictionary);
+		}
+	}
+	
+}
+
+}
+
+class Place {
+	
+	private String name;
+	private double latitude;
+	private double longitude;
+	
+	public Place() 
+	{	
+		this(null, 0, 0);
+	}
+	
+	public Place(String name, double latitude, double longitude) 
+	{
+		this.name = name;
+		this.latitude = latitude;
+		this.longitude = longitude;
+	}
+	
+	public boolean equals(Place that)
+	{
+		return this.name.equals(that.name);
+	}
+	
+	public double getLat() 
+	{
+		return latitude;
+	}
+	
+	public double getLong()
+	{
+		return longitude;
+	}
+	
+	public String getName()
+	{
+		return name;
+	}
+	
+	public String toString()
+	{
+		return name + "," + latitude + "," + longitude;
+	}
+}
+
+class PlaceDictionary<E> extends ArrayList<E> {
+	
+	public PlaceDictionary()
+	{
+		super();
+	}					
 }
 
 
