@@ -35,10 +35,11 @@ class Window extends JFrame {
 	String filename = null;
 	File file = null;
 	String year = null;
+	String fileTitle = null;
 	ArrayList<String> allWords = new ArrayList<String>();
 	ArrayList<String> procWords = new ArrayList<String>();
 	ArrayList<String> uniqueWords = new ArrayList<String>();
-	ArrayList<WordFreq> wordFreqs = new ArrayList<WordFreq>();
+	ArrayList<Word> wordFreqs = new ArrayList<Word>();
 	String[][] wordCounter;
 	int totalWords = 0;
 	int uniqueWordTotal = 0;
@@ -55,13 +56,19 @@ class Window extends JFrame {
 	JTextArea fileArea = new JTextArea();
 	
 	JPanel twoPanel = new JPanel();
-	JLabel dateLabel = new JLabel
-		("Second, enter the file's date of publication or creation. ");
-	JTextArea yearArea = new JTextArea();
+	JLabel titleLabel = new JLabel("Second, enter the text's title.");
+	JTextArea titleArea = new JTextArea();
 	
 	JPanel threePanel = new JPanel();
+	JLabel dateLabel = new JLabel
+		("Third, enter the text's date of publication or creation. ");
+	JTextArea dateArea = new JTextArea();
+	
+	JPanel fourPanel = new JPanel();
 	JLabel analyzeLabel = new JLabel("Finally, analyze! ");
 	JButton analyzeButton = new JButton("Analyze");
+	
+	JPanel blankPanel = new JPanel();
 	
 	
 	public Window()
@@ -75,33 +82,41 @@ class Window extends JFrame {
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setTitle("GeoText Analyzer");
 		this.setLocationRelativeTo(null);
-		this.setLayout(new GridLayout(5,1));
+		this.setLayout(new GridLayout(0,1));
 		
 		greeting.setFont(new Font("Serif", Font.BOLD, 28));
 		headerPanel.setLayout(new FlowLayout());
 		headerPanel.add(greeting);
 		
-		onePanel.setLayout(new BorderLayout());
-		onePanel.add(chooseLabel, BorderLayout.LINE_START);
-		onePanel.add(browseButton, BorderLayout.CENTER);
+		onePanel.setLayout(new FlowLayout());
+		onePanel.add(chooseLabel);
+		onePanel.add(browseButton);
 		
 		filePanel.setLayout(new BorderLayout());
+		filePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		filePanel.add(fileLabel, BorderLayout.LINE_START);
 		filePanel.add(fileArea, BorderLayout.CENTER);
 		
 		twoPanel.setLayout(new BorderLayout());
-		twoPanel.add(dateLabel, BorderLayout.LINE_START);
-		twoPanel.add(yearArea, BorderLayout.CENTER);
+		twoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		twoPanel.add(titleLabel, BorderLayout.LINE_START);
+		twoPanel.add(titleArea, BorderLayout.CENTER);
 		
 		threePanel.setLayout(new BorderLayout());
-		threePanel.add(analyzeLabel, BorderLayout.LINE_START);
-		threePanel.add(analyzeButton, BorderLayout.CENTER);
+		threePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		threePanel.add(dateLabel, BorderLayout.LINE_START);
+		threePanel.add(dateArea, BorderLayout.CENTER);
+		
+		fourPanel.setLayout(new FlowLayout());
+		fourPanel.add(analyzeLabel);
+		fourPanel.add(analyzeButton);
 		
 		this.add(headerPanel);
 		this.add(onePanel);
 		this.add(filePanel);
 		this.add(twoPanel);
 		this.add(threePanel);
+		this.add(fourPanel);
 		
 		this.pack();
 	}
@@ -135,7 +150,8 @@ class Window extends JFrame {
 	
 	private void analyze_clicked()
 	{
-		year = yearArea.getText();
+		year = dateArea.getText().trim();
+		fileTitle = titleArea.getText().trim();
 		
 		if (file == null || filename == null)
 		{
@@ -152,6 +168,8 @@ class Window extends JFrame {
 			uniqueWords = getUnique(procWords);
 			totalWords = procWords.size();
 			uniqueWordTotal = uniqueWords.size();
+			wordFreqs = countWords(procWords);
+			results100 = calc100(wordFreqs);
 			
 			if (allWords.size() == 0)
 			{
@@ -231,12 +249,37 @@ class Window extends JFrame {
 		
 		return uniqueWords;
 	}
+	
+	private ArrayList<Word> countWords(ArrayList<String> procWords)
+	{
+		ArrayList<Word> wordFreqs = new ArrayList<Word>();
+		
+		for (String word : uniqueWords)
+		{
+			Word wordObj = new Word(word);
+			wordFreqs.add(wordObj);
+		}
+		
+		for (String word : procWords)
+		{
+			for (Word wordObj : wordFreqs)
+			{
+				if (word.equals(wordObj.getWord()))
+				{
+					wordObj.addFreq();
+				}			
+			}
+		}
+		
+		Collections.sort(wordFreqs);
+		return wordFreqs;
+	}
 
 	
 class DataWindow extends JFrame {
 	
-	String title = "File: " + filename + "   Date: " + year;
-	PlaceDictionary<Place> placeDictionary = new PlaceDictionary<Place>();	
+	String title = String.format("%s (%s)", fileTitle, year);
+	ArrayList<Place> placeDictionary = new ArrayList<Place>();	
 	
 	JPanel textPanel = new JPanel();
 	JLabel textLabel = new JLabel("Text Analysis");
@@ -245,21 +288,35 @@ class DataWindow extends JFrame {
 	JLabel uniqueLabel = new JLabel("Unique Words: ");
 	JLabel uniqueWordsLabel = new JLabel(Integer.toString(uniqueWordTotal));
 	
+	JPanel top100Panel = new JPanel();
+	JLabel top100Label = new JLabel("Top 100 Words, very common words excluded");
+	JButton excludeButton = new JButton("Click to see excluded words");
+	JTextArea top100Area = new JTextArea();
+	JScrollPane top100Pane = new JScrollPane(top100Area);
+	
 	JPanel freqPanel = new JPanel();
 	JButton findButton = new JButton("Find Frequency");
-	JLabel freqLabel = new JLabel("Word Frequencies");
+	JLabel freqLabel = new JLabel("Word Search & Add");
 	JLabel findWordLabel = new JLabel("Word: ");
 	JTextArea findWordArea = new JTextArea();
 	JTextArea wordResults = new JTextArea();
 	JPanel wordFind = new JPanel();
 	JScrollPane freqPane = new JScrollPane(wordResults);
+	JButton addWord = new JButton("Add to Custom Word Dictionary");
+	
+	JPanel custPanel = new JPanel();
+	JLabel custLabel = new JLabel("Custom Word Analysis");
+	JTextArea custArea = new JTextArea();
+	JScrollPane custPane = new JScrollPane(custArea);
+	JButton runCust = new JButton("Run Analysis");
+	JButton saveCust = new JButton("Save as CSV File");
 	
 	JPanel geoPanel = new JPanel();
 	JLabel geoLabel = new JLabel("Place Name Analysis");
 	JButton runGeo = new JButton("Run Analysis");
 	JTextArea geoData = new JTextArea();
 	JScrollPane geoPane = new JScrollPane(geoData);
-	JButton saveGeo = new JButton("Save As Comma-Separated-Variable (CSV) File");
+	JButton saveGeo = new JButton("Save As CSV File");
 	
 	JPanel dictPanel = new JPanel();
 	JLabel dictLabel = new JLabel("Customize the Place Name Dictionary");
@@ -280,9 +337,9 @@ class DataWindow extends JFrame {
 	
 	private void do_layout()
 	{	
-		textPanel.setLayout(new BorderLayout());
+		textPanel.setLayout(new GridLayout(3,1));
 		textPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		textPanel.add(textLabel, BorderLayout.PAGE_START);
+		textPanel.add(textLabel);
 		JPanel totalPanel = new JPanel();
 		totalPanel.setLayout(new FlowLayout());
 		totalPanel.add(totalLabel);
@@ -291,57 +348,89 @@ class DataWindow extends JFrame {
 		uniquePanel.setLayout(new FlowLayout());
 		uniquePanel.add(uniqueLabel);
 		uniquePanel.add(uniqueWordsLabel);
-		JPanel dataPanel = new JPanel();
-		dataPanel.setLayout(new GridLayout(0,2));
-		dataPanel.add(totalPanel);
-		dataPanel.add(uniquePanel);
-		textPanel.add(dataPanel, BorderLayout.CENTER);
+		textPanel.add(totalPanel);
+		textPanel.add(uniquePanel);
 		
-		wordFind.setLayout(new GridLayout(1,3));
+		top100Panel.setLayout(new BorderLayout());
+		top100Panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		top100Panel.add(top100Label, BorderLayout.PAGE_START);
+		top100Area.setEditable(false);
+		top100Panel.add(top100Pane, BorderLayout.CENTER);
+		top100Panel.add(excludeButton, BorderLayout.PAGE_END);
+		
+		wordFind.setLayout(new GridLayout(2,2));
 		wordFind.add(findWordLabel);
 		wordFind.add(findWordArea);
 		wordFind.add(findButton);
-		
+		wordFind.add(addWord);
 		freqPanel.setLayout(new BorderLayout());
 		freqPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		freqPanel.add(freqLabel, BorderLayout.PAGE_START);
-		freqPanel.add(wordFind, BorderLayout.CENTER);
+		freqPanel.add(wordFind, BorderLayout.PAGE_END);
 		wordResults.setEditable(false);
-		freqPanel.add(freqPane, BorderLayout.PAGE_END);
+		freqPanel.add(freqPane, BorderLayout.CENTER);
+		
+		custPanel.setLayout(new BorderLayout());
+		custPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		custPanel.add(custLabel, BorderLayout.PAGE_START);
+		custArea.setEditable(false);
+		custPanel.add(custPane, BorderLayout.CENTER);
+		JPanel custButtons = new JPanel();
+		custButtons.setLayout(new GridLayout(1,2));
+		custButtons.add(runCust);
+		custButtons.add(saveCust);
+		custPanel.add(custButtons, BorderLayout.PAGE_END);
 		
 		geoData.setEditable(false);
 		geoPanel.setLayout(new BorderLayout());
 		geoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		geoPanel.add(geoLabel, BorderLayout.PAGE_START);
-		geoPanel.add(runGeo, BorderLayout.LINE_END);
 		geoPanel.add(geoPane, BorderLayout.CENTER);
-		geoPanel.add(saveGeo, BorderLayout.PAGE_END);
+		JPanel geoButtons = new JPanel();
+		geoButtons.setLayout(new GridLayout(1,2));
+		geoButtons.add(runGeo);
+		geoButtons.add(saveGeo);
+		geoPanel.add(geoButtons, BorderLayout.PAGE_END);
 		
 		dictPanel.setLayout(new BorderLayout());
 		dictPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		JPanel enterAddData = new JPanel();
-		enterAddData.setLayout(new GridLayout(4,2));
-		enterAddData.add(nameField);
-		enterAddData.add(nameArea);
-		enterAddData.add(latField);
-		enterAddData.add(latArea);
-		enterAddData.add(longField);
-		enterAddData.add(longArea);
-		enterAddData.add(addButton);
-		enterAddData.add(delButton);
+		enterAddData.setLayout(new GridLayout(3,1));
+		JPanel namePanel = new JPanel();
+		namePanel.setLayout(new BorderLayout());
+		namePanel.add(nameField, BorderLayout.LINE_START);
+		namePanel.add(nameArea, BorderLayout.CENTER);
+		JPanel latPanel = new JPanel();
+		latPanel.setLayout(new BorderLayout());
+		latPanel.add(latField, BorderLayout.LINE_START);
+		latPanel.add(latArea, BorderLayout.CENTER);
+		JPanel longPanel = new JPanel();
+		longPanel.setLayout(new BorderLayout());
+		longPanel.add(longField, BorderLayout.LINE_START);
+		longPanel.add(longArea, BorderLayout.CENTER);
+		enterAddData.add(namePanel);
+		enterAddData.add(latPanel);
+		enterAddData.add(longPanel);
+		JPanel dictButtons = new JPanel();
+		dictButtons.setLayout(new GridLayout(1,2));
+		dictButtons.add(addButton);
+		dictButtons.add(delButton);
 		dictPanel.add(dictLabel, BorderLayout.PAGE_START);
 		dictPanel.add(enterAddData, BorderLayout.CENTER);
+		dictPanel.add(dictButtons, BorderLayout.PAGE_END);
 		
 		this.setTitle(title);
-		this.setSize(500,500);
 		this.setLocationRelativeTo(null);
-		this.setLayout(new GridLayout(2,2));
+		this.setLayout(new GridLayout(3,3));
 		
 		this.add(textPanel);
+		this.add(top100Panel);
 		this.add(freqPanel);
-		this.add(geoPanel);
+		this.add(custPanel);
 		this.add(dictPanel);
+		this.add(geoPanel);
 		
+		this.pack();
 	}
 	
 	private void do_plumbing()
@@ -420,19 +509,23 @@ class DataWindow extends JFrame {
 					place.addFreq();
 				}	
 			}
-			
-			results = results + String.format("%s (%.2f, %.2f): %d appearances\n",
-							place.getName(), place.getLat(), place.getLong(), place.getFreq());
-			
-			
 		}
 		
+		Collections.sort(placeDictionary);
+		
+		for (Place place : placeDictionary)
+		{
+			results = results + String.format("%s (%.2f, %.2f): %d appearances\n",
+							place.getName(), place.getLat(), place.getLong(), place.getFreq());
+		}
+			
 		geoData.setText(results);
 		
 	}
 	
 	private void saveGeo_clicked()
 	{
+		String header = title;
 		String results = "Place,Frequency,Latitude,Longitude\n";
 		
 		for (Place place : placeDictionary)
@@ -455,6 +548,7 @@ class DataWindow extends JFrame {
 			String outputName = "GeoTextResults.csv";
 			FileOutputStream os = new FileOutputStream(outputName);
 			PrintWriter pw = new PrintWriter(os);
+			pw.print(header);
 			pw.print(results);
 			pw.close();
 		}
@@ -572,7 +666,7 @@ class DataWindow extends JFrame {
 }
 
 
-class Place {
+class Place implements Comparable<Place> {
 	
 	private String name;
 	private double latitude;
@@ -626,15 +720,64 @@ class Place {
 	{
 		freq++;
 	}
+	
+	public int compareTo(Place that)
+	{
+        if  (this.freq < that.freq)  return 1;
+        else if (this.freq > that.freq ) return -1;
+        else return 0;
+    }  
 }
 
-class PlaceDictionary<E> extends ArrayList<E> {
+class Word implements Comparable<Word> {
 	
-	public PlaceDictionary()
+	private String word;
+	private int freq;
+	
+	public Word() 
+	{	
+		this(null);
+	}
+	
+	public Word(String word) 
 	{
-		super();
-	}					
+		this.word = word;
+		freq = 0;
+	}
+	
+	public boolean equals(Word that)
+	{
+		return this.word.equals(that.word);
+	}
+	
+	public int getFreq()
+	{
+		return freq;
+	}
+	
+	public String getWord()
+	{
+		return word;
+	}
+	
+	public String toString()
+	{
+		return word;
+	}
+	
+	public void addFreq()
+	{
+		freq++;
+	}
+	
+	public int compareTo(Word that)
+	{
+        if  (this.freq < that.freq)  return 1;
+        else if (this.freq > that.freq ) return -1;
+        else return 0;
+    }  
 }
+
 
 //file closing? when & how?
 
