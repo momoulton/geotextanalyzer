@@ -38,6 +38,7 @@ class Window extends JFrame {
 	ArrayList<String> allWords = new ArrayList<String>();
 	ArrayList<String> procWords = new ArrayList<String>();
 	ArrayList<String> uniqueWords = new ArrayList<String>();
+	ArrayList<WordFreq> wordFreqs = new ArrayList<WordFreq>();
 	String[][] wordCounter;
 	int totalWords = 0;
 	int uniqueWordTotal = 0;
@@ -123,9 +124,6 @@ class Window extends JFrame {
 	private void browse_clicked()
 	{
 		JFileChooser fc = new JFileChooser();
-		//FileNameExtensionFilter filter = new FileNameExtensionFilter("txt");
-		//fc.addChoosableFileFilter(filter);
-		//maybe add in filter later
 		int returnVal = fc.showOpenDialog(Window.this);
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 		{
@@ -252,13 +250,15 @@ class DataWindow extends JFrame {
 	JLabel freqLabel = new JLabel("Word Frequencies");
 	JLabel findWordLabel = new JLabel("Word: ");
 	JTextArea findWordArea = new JTextArea();
-	JTextArea wordResults = new JTextArea("Results will go here");
+	JTextArea wordResults = new JTextArea();
 	JPanel wordFind = new JPanel();
+	JScrollPane freqPane = new JScrollPane(wordResults);
 	
 	JPanel geoPanel = new JPanel();
 	JLabel geoLabel = new JLabel("Place Name Analysis");
 	JButton runGeo = new JButton("Run Analysis");
-	JTextArea geoData = new JTextArea("Results will go here");
+	JTextArea geoData = new JTextArea();
+	JScrollPane geoPane = new JScrollPane(geoData);
 	JButton saveGeo = new JButton("Save As Comma-Separated-Variable (CSV) File");
 	
 	JPanel dictPanel = new JPanel();
@@ -276,7 +276,6 @@ class DataWindow extends JFrame {
 	{
 		do_layout();
 		do_plumbing();
-		//readData(file);
 	}
 	
 	private void do_layout()
@@ -307,13 +306,15 @@ class DataWindow extends JFrame {
 		freqPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		freqPanel.add(freqLabel, BorderLayout.PAGE_START);
 		freqPanel.add(wordFind, BorderLayout.CENTER);
-		freqPanel.add(wordResults, BorderLayout.PAGE_END);
+		wordResults.setEditable(false);
+		freqPanel.add(freqPane, BorderLayout.PAGE_END);
 		
+		geoData.setEditable(false);
 		geoPanel.setLayout(new BorderLayout());
 		geoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		geoPanel.add(geoLabel, BorderLayout.PAGE_START);
 		geoPanel.add(runGeo, BorderLayout.LINE_END);
-		geoPanel.add(geoData, BorderLayout.CENTER);
+		geoPanel.add(geoPane, BorderLayout.CENTER);
 		geoPanel.add(saveGeo, BorderLayout.PAGE_END);
 		
 		dictPanel.setLayout(new BorderLayout());
@@ -378,17 +379,90 @@ class DataWindow extends JFrame {
 	
 	private void find_clicked()
 	{
-		System.out.println("Find Frequency Clicked");
+		String word = findWordArea.getText().trim();
+		String lowWord = word.toLowerCase();
+		int freq = 0;
+		
+		if (word.equals(""))
+		{
+			JOptionPane.showMessageDialog(null, 
+				"Please enter a word.");
+		}
+		else
+		{
+			for (String text : procWords)
+			{
+				if (lowWord.equals(text))
+				{
+					freq++;
+				}
+			}
+		
+			double rate = ((double) freq / totalWords) * 100;
+			String results = String.format("Word: %s\n Total appearances: %d\n Percent of text: %.6f%%", 
+							word, freq, rate);
+		
+			wordResults.setText(results);
+		}
 	}
 	
 	private void runGeo_clicked()
 	{
-		System.out.println("Run GeoAnalysis Clicked");
+		String results = "";
+		
+		for (Place place : placeDictionary)
+		{
+			String lowPlace = place.getName().toLowerCase();
+			for (String text : procWords)
+			{
+				if (lowPlace.equals(text))
+				{
+					place.addFreq();
+				}	
+			}
+			
+			results = results + String.format("%s (%.2f, %.2f): %d appearances\n",
+							place.getName(), place.getLat(), place.getLong(), place.getFreq());
+			
+			
+		}
+		
+		geoData.setText(results);
+		
 	}
 	
 	private void saveGeo_clicked()
 	{
-		System.out.println("Save GeoAnalysis Clicked");
+		String results = "Place,Frequency,Latitude,Longitude\n";
+		
+		for (Place place : placeDictionary)
+		{
+			String lowPlace = place.getName().toLowerCase();
+			for (String text : procWords)
+			{
+				if (lowPlace.equals(text))
+				{
+					place.addFreq();
+				}	
+			}
+			
+			results = results + String.format("%s,%d,%.6f,%.6f\n",
+							place.getName(), place.getFreq(), place.getLat(), place.getLong());	
+		}
+		
+		try
+		{
+			String outputName = "GeoTextResults.csv";
+			FileOutputStream os = new FileOutputStream(outputName);
+			PrintWriter pw = new PrintWriter(os);
+			pw.print(results);
+			pw.close();
+		}
+		catch (IOException e)
+		{
+			JOptionPane.showMessageDialog(null, 
+				"There's a problem with the file. Please try again.");
+		}
 	}
 	
 	private void add_clicked()
@@ -398,7 +472,7 @@ class DataWindow extends JFrame {
 		double longitude = 0;
 		Place newplace = null;
 		
-		if (nameArea.getText().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
+		if (nameArea.getText().trim().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
 		{
 			JOptionPane.showMessageDialog(null, "Please enter values for all fields.");
 		}
@@ -406,7 +480,7 @@ class DataWindow extends JFrame {
 		{
 			try 
 			{
-				name = nameArea.getText();
+				name = nameArea.getText().trim();
 				latitude = Double.parseDouble(latArea.getText());
 				longitude = Double.parseDouble(longArea.getText());
 				newplace = new Place(name, latitude, longitude);
@@ -446,8 +520,9 @@ class DataWindow extends JFrame {
 		double latitude = 0;
 		double longitude = 0;
 		Place newplace = null;
+		Place removePlace = null;
 		
-		if (nameArea.getText().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
+		if (nameArea.getText().trim().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
 		{
 			JOptionPane.showMessageDialog(null, "Please enter values for all fields.");
 		}
@@ -455,7 +530,7 @@ class DataWindow extends JFrame {
 		{
 			try 
 			{
-				name = nameArea.getText();
+				name = nameArea.getText().trim();
 				latitude = Double.parseDouble(latArea.getText());
 				longitude = Double.parseDouble(longArea.getText());
 				newplace = new Place(name, latitude, longitude);
@@ -465,25 +540,28 @@ class DataWindow extends JFrame {
 				JOptionPane.showMessageDialog(null, "Please enter numbers only for latitude and longitude.");
 			}
 			
-			int count = 0;
 			
 			for (Place place : placeDictionary)
 			{
 				if (newplace.equals(place))
 				{
-					count++;
-					placeDictionary.remove(place);
-					JOptionPane.showMessageDialog(null, "Removed dictionary: " + place);
-					nameArea.setText("");
-					latArea.setText("");
-					longArea.setText("");
+					removePlace = place;
 				}
 			}
 			
-			if (count == 0)
+			if (removePlace != null)
+			{
+				placeDictionary.remove(removePlace);
+				JOptionPane.showMessageDialog(null, "Removed from dictionary: " 
+									+ removePlace);
+				nameArea.setText("");
+				latArea.setText("");
+				longArea.setText("");
+			}
+			else
 			{
 			
-				JOptionPane.showMessageDialog(null, "That place is not in the dictionary.");
+				JOptionPane.showMessageDialog(null, newplace + "is not in the dictionary.");
 			}
 			
 			System.out.println(placeDictionary);
@@ -499,6 +577,7 @@ class Place {
 	private String name;
 	private double latitude;
 	private double longitude;
+	private int freq;
 	
 	public Place() 
 	{	
@@ -510,6 +589,7 @@ class Place {
 		this.name = name;
 		this.latitude = latitude;
 		this.longitude = longitude;
+		freq = 0;
 	}
 	
 	public boolean equals(Place that)
@@ -527,6 +607,11 @@ class Place {
 		return longitude;
 	}
 	
+	public int getFreq()
+	{
+		return freq;
+	}
+	
 	public String getName()
 	{
 		return name;
@@ -535,6 +620,11 @@ class Place {
 	public String toString()
 	{
 		return name + "," + latitude + "," + longitude;
+	}
+	
+	public void addFreq()
+	{
+		freq++;
 	}
 }
 
@@ -546,4 +636,5 @@ class PlaceDictionary<E> extends ArrayList<E> {
 	}					
 }
 
+//file closing? when & how?
 
