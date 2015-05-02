@@ -40,6 +40,7 @@ class Window extends JFrame {
 	ArrayList<String> procWords = new ArrayList<String>();
 	ArrayList<String> uniqueWords = new ArrayList<String>();
 	ArrayList<Word> wordFreqs = new ArrayList<Word>();
+	ArrayList<Word> results100 = new ArrayList<Word>();
 	String[][] wordCounter;
 	int totalWords = 0;
 	int uniqueWordTotal = 0;
@@ -273,6 +274,52 @@ class Window extends JFrame {
 		
 		Collections.sort(wordFreqs);
 		return wordFreqs;
+	}
+	
+	private ArrayList<Word> calc100(ArrayList<Word> wordFreqs)
+	{
+		ArrayList<Word> results100 = new ArrayList<Word>();
+		ArrayList<Word> uncommon = new ArrayList<Word>();
+		String[] common = {"the", "be", "to", "of", "and", "a", "in", "that",
+			"have", "i", "it", "for", "not", "with", "he", "as", "you", "do", "at",
+			"this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
+			"or", "an", "will", "my", "one", "all", "would", "there", "their", "what",
+			"so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
+			"when", "make", "can", "like", "time", "no", "just", "him", "know",
+			"take", "people", "into", "year", "your", "good", "some", "could", 
+			"them", "see", "other", "than", "then", "now", "look", "only", "come",
+			"its", "over", "think", "also", "back", "after", "use", "two", "how",
+			"our", "work", "first", "well", "way", "even", "new", "want", "because",
+		"any", "these", "give", "day", "most", "us"};
+		HashSet<String> commonHash = new HashSet<String>();
+		
+		for (String word : common)
+		{
+			commonHash.add(word);
+		}
+		
+		System.out.println(wordFreqs.size());
+		
+		for (Word wordFreq : wordFreqs)
+		{
+			String word = wordFreq.getWord();
+			if (!commonHash.contains(word))
+			{
+				uncommon.add(wordFreq);
+			}
+		}
+		
+		System.out.println(uncommon.size());
+		
+		for (int i = 0; i < 100; i ++)
+		{
+			Word word = uncommon.get(i);
+			results100.add(i, word);
+		}
+		
+		System.out.print(results100);
+		
+		return results100;
 	}
 
 	
