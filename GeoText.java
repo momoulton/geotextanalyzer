@@ -40,7 +40,6 @@ class Window extends JFrame {
 	ArrayList<String> procWords = new ArrayList<String>();
 	ArrayList<String> uniqueWords = new ArrayList<String>();
 	ArrayList<Word> wordFreqs = new ArrayList<Word>();
-	ArrayList<Word> results100 = new ArrayList<Word>();
 	String[][] wordCounter;
 	int totalWords = 0;
 	int uniqueWordTotal = 0;
@@ -170,7 +169,6 @@ class Window extends JFrame {
 			totalWords = procWords.size();
 			uniqueWordTotal = uniqueWords.size();
 			wordFreqs = countWords(procWords);
-			results100 = calc100(wordFreqs);
 			
 			if (allWords.size() == 0)
 			{
@@ -191,7 +189,7 @@ class Window extends JFrame {
 		
 		try
 		{
-			inFile = new Scanner(file);
+			inFile = new Scanner(file).useDelimiter("-|\\s");
 		}
 		catch (IOException e)
 		{
@@ -276,57 +274,13 @@ class Window extends JFrame {
 		return wordFreqs;
 	}
 	
-	private ArrayList<Word> calc100(ArrayList<Word> wordFreqs)
-	{
-		ArrayList<Word> results100 = new ArrayList<Word>();
-		ArrayList<Word> uncommon = new ArrayList<Word>();
-		String[] common = {"the", "be", "to", "of", "and", "a", "in", "that",
-			"have", "i", "it", "for", "not", "with", "he", "as", "you", "do", "at",
-			"this", "but", "his", "by", "from", "they", "we", "say", "her", "she",
-			"or", "an", "will", "my", "one", "all", "would", "there", "their", "what",
-			"so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
-			"when", "make", "can", "like", "time", "no", "just", "him", "know",
-			"take", "people", "into", "year", "your", "good", "some", "could", 
-			"them", "see", "other", "than", "then", "now", "look", "only", "come",
-			"its", "over", "think", "also", "back", "after", "use", "two", "how",
-			"our", "work", "first", "well", "way", "even", "new", "want", "because",
-		"any", "these", "give", "day", "most", "us"};
-		HashSet<String> commonHash = new HashSet<String>();
-		
-		for (String word : common)
-		{
-			commonHash.add(word);
-		}
-		
-		System.out.println(wordFreqs.size());
-		
-		for (Word wordFreq : wordFreqs)
-		{
-			String word = wordFreq.getWord();
-			if (!commonHash.contains(word))
-			{
-				uncommon.add(wordFreq);
-			}
-		}
-		
-		System.out.println(uncommon.size());
-		
-		for (int i = 0; i < 100; i ++)
-		{
-			Word word = uncommon.get(i);
-			results100.add(i, word);
-		}
-		
-		System.out.print(results100);
-		
-		return results100;
-	}
 
 	
 class DataWindow extends JFrame {
 	
 	String title = String.format("%s (%s)", fileTitle, year);
-	ArrayList<Place> placeDictionary = new ArrayList<Place>();	
+	ArrayList<Place> placeDictionary = new ArrayList<Place>();
+	ArrayList<Word> custDictionary = new ArrayList<Word>();
 	
 	JPanel textPanel = new JPanel();
 	JLabel textLabel = new JLabel("Text Analysis");
@@ -336,23 +290,24 @@ class DataWindow extends JFrame {
 	JLabel uniqueWordsLabel = new JLabel(Integer.toString(uniqueWordTotal));
 	
 	JPanel top100Panel = new JPanel();
-	JLabel top100Label = new JLabel("Top 100 Words, very common words excluded");
-	JButton excludeButton = new JButton("Click to see excluded words");
+	JLabel top100Label = new JLabel("All words by frequency");
+	JButton saveAllButton = new JButton("Save as CSV File");
 	JTextArea top100Area = new JTextArea();
 	JScrollPane top100Pane = new JScrollPane(top100Area);
 	
 	JPanel freqPanel = new JPanel();
 	JButton findButton = new JButton("Find Frequency");
-	JLabel freqLabel = new JLabel("Word Search & Add");
-	JLabel findWordLabel = new JLabel("Word: ");
+	JLabel freqLabel = new JLabel("Word Search & Build Custom Word Bank");
+	JLabel findWordLabel = new JLabel("Enter Word: ");
 	JTextArea findWordArea = new JTextArea();
 	JTextArea wordResults = new JTextArea();
 	JPanel wordFind = new JPanel();
 	JScrollPane freqPane = new JScrollPane(wordResults);
-	JButton addWord = new JButton("Add to Custom Word Dictionary");
+	JButton addWord = new JButton("Add to Custom Word Bank");
+	JButton delWord = new JButton("Delete from Custom Word Bank");
 	
 	JPanel custPanel = new JPanel();
-	JLabel custLabel = new JLabel("Custom Word Analysis");
+	JLabel custLabel = new JLabel("Custom Word Bank");
 	JTextArea custArea = new JTextArea();
 	JScrollPane custPane = new JScrollPane(custArea);
 	JButton runCust = new JButton("Run Analysis");
@@ -363,7 +318,7 @@ class DataWindow extends JFrame {
 	JButton runGeo = new JButton("Run Analysis");
 	JTextArea geoData = new JTextArea();
 	JScrollPane geoPane = new JScrollPane(geoData);
-	JButton saveGeo = new JButton("Save As CSV File");
+	JButton saveGeo = new JButton("Save as CSV File");
 	
 	JPanel dictPanel = new JPanel();
 	JLabel dictLabel = new JLabel("Customize the Place Name Dictionary");
@@ -398,18 +353,24 @@ class DataWindow extends JFrame {
 		textPanel.add(totalPanel);
 		textPanel.add(uniquePanel);
 		
+		String allResults = displayResults(wordFreqs);
 		top100Panel.setLayout(new BorderLayout());
 		top100Panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		top100Panel.add(top100Label, BorderLayout.PAGE_START);
 		top100Area.setEditable(false);
+		top100Area.setText(allResults);
 		top100Panel.add(top100Pane, BorderLayout.CENTER);
-		top100Panel.add(excludeButton, BorderLayout.PAGE_END);
+		top100Panel.add(saveAllButton, BorderLayout.PAGE_END);
 		
-		wordFind.setLayout(new GridLayout(2,2));
-		wordFind.add(findWordLabel);
-		wordFind.add(findWordArea);
-		wordFind.add(findButton);
-		wordFind.add(addWord);
+		wordFind.setLayout(new BorderLayout());
+		wordFind.add(findWordLabel, BorderLayout.LINE_START);
+		wordFind.add(findWordArea, BorderLayout.CENTER);
+		wordFind.add(findButton, BorderLayout.LINE_END);
+		JPanel findButtons = new JPanel();
+		findButtons.setLayout(new GridLayout(1,2));
+		findButtons.add(addWord);
+		findButtons.add(delWord);
+		wordFind.add(findButtons, BorderLayout.PAGE_END);
 		freqPanel.setLayout(new BorderLayout());
 		freqPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		freqPanel.add(freqLabel, BorderLayout.PAGE_START);
@@ -482,9 +443,39 @@ class DataWindow extends JFrame {
 	
 	private void do_plumbing()
 	{
+		saveAllButton.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					saveAll_clicked();
+				}
+		} );
+		
 		findButton.addActionListener(new ActionListener() { 
 				public void actionPerformed(ActionEvent e) {
 					find_clicked();
+				}
+		} );
+		
+		addWord.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					addWord_clicked();
+				}
+		} );
+		
+		delWord.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					delWord_clicked();
+				}
+		} );
+		
+		runCust.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					runCust_clicked();
+				}
+		} );
+		
+		saveCust.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					saveCust_clicked();
 				}
 		} );
 		
@@ -511,6 +502,19 @@ class DataWindow extends JFrame {
 					del_clicked();
 				}
 		} );	
+	}
+	
+	private String displayResults(ArrayList<Word> wordFreqs)
+	{
+		String results = "";
+		
+		for (Word wordFreq : wordFreqs)
+		{
+			results = results + String.format("%s: %d\n", 
+						wordFreq.getWord(), wordFreq.getFreq());
+		}
+		
+		return results;
 	}
 	
 	private void find_clicked()
@@ -542,21 +546,53 @@ class DataWindow extends JFrame {
 		}
 	}
 	
+	private void runCust_clicked()
+	{
+		String results = "";
+
+		Collections.sort(custDictionary);
+		
+		for (Word word : custDictionary)
+		{
+			results = results + String.format("%s: %d appearances\n",
+							word.getWord(), word.getFreq());
+		}
+			
+		custArea.setText(results);
+	}
+	
+	private void saveCust_clicked()
+	{
+		runCust_clicked();
+		
+		String header = title;
+		String results = "Word,Frequency\n";
+		
+		for (Word word : custDictionary)
+		{	
+			results = results + String.format("%s,%d\n",
+							word.getWord(), word.getFreq());	
+		}
+		
+		try
+		{
+			String outputName = "CustomTextResults.csv";
+			FileOutputStream os = new FileOutputStream(outputName);
+			PrintWriter pw = new PrintWriter(os);
+			pw.println(header);
+			pw.print(results);
+			pw.close();
+		}
+		catch (IOException e)
+		{
+			JOptionPane.showMessageDialog(null, 
+				"There's a problem with the file. Please try again.");
+		}
+	}
+	
 	private void runGeo_clicked()
 	{
 		String results = "";
-		
-		for (Place place : placeDictionary)
-		{
-			String lowPlace = place.getName().toLowerCase();
-			for (String text : procWords)
-			{
-				if (lowPlace.equals(text))
-				{
-					place.addFreq();
-				}	
-			}
-		}
 		
 		Collections.sort(placeDictionary);
 		
@@ -570,22 +606,42 @@ class DataWindow extends JFrame {
 		
 	}
 	
+	private void saveAll_clicked()
+	{
+		String header = title;
+		String results = "Word,Frequency\n";
+		
+		for (Word wordFreq : wordFreqs)
+		{
+			
+			results = results + String.format("%s,%d\n",
+							wordFreq.getWord(), wordFreq.getFreq());	
+		}
+		
+		try
+		{
+			String outputName = "AllWordTextResults.csv";
+			FileOutputStream os = new FileOutputStream(outputName);
+			PrintWriter pw = new PrintWriter(os);
+			pw.println(header);
+			pw.print(results);
+			pw.close();
+		}
+		catch (IOException e)
+		{
+			JOptionPane.showMessageDialog(null, 
+				"There's a problem with the file. Please try again.");
+		}
+	}
+	
+	
 	private void saveGeo_clicked()
 	{
 		String header = title;
 		String results = "Place,Frequency,Latitude,Longitude\n";
 		
 		for (Place place : placeDictionary)
-		{
-			String lowPlace = place.getName().toLowerCase();
-			for (String text : procWords)
-			{
-				if (lowPlace.equals(text))
-				{
-					place.addFreq();
-				}	
-			}
-			
+		{	
 			results = results + String.format("%s,%d,%.6f,%.6f\n",
 							place.getName(), place.getFreq(), place.getLat(), place.getLong());	
 		}
@@ -595,7 +651,7 @@ class DataWindow extends JFrame {
 			String outputName = "GeoTextResults.csv";
 			FileOutputStream os = new FileOutputStream(outputName);
 			PrintWriter pw = new PrintWriter(os);
-			pw.print(header);
+			pw.println(header);
 			pw.print(results);
 			pw.close();
 		}
@@ -603,6 +659,87 @@ class DataWindow extends JFrame {
 		{
 			JOptionPane.showMessageDialog(null, 
 				"There's a problem with the file. Please try again.");
+		}
+	}
+	
+	private void addWord_clicked()
+	{	
+		String word = findWordArea.getText().trim();
+		String lowWord = word.toLowerCase();
+		Word newWord = null;
+		
+		if (word.equals(""))
+		{
+			JOptionPane.showMessageDialog(null, "Please enter a word.");
+		}
+		else
+		{
+			newWord = new Word(lowWord);
+
+			int count = 0;
+			
+			for (Word oldWord : custDictionary)
+			{
+				if (newWord.equals(oldWord)) count++;
+			}
+					
+		
+			if (count == 0)
+			{
+				custDictionary.add(newWord);
+				for (String text: procWords)
+				{
+					if (lowWord.equals(text))
+					{
+						newWord.addFreq();
+					}
+				}
+				JOptionPane.showMessageDialog(null, "Added to word bank: " + word);
+				findWordArea.setText("");
+				wordResults.setText("");	
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(null, "That word is already in the word bank.");
+			}
+		}
+	}
+	
+	private void delWord_clicked()
+	{
+		String word = findWordArea.getText().trim();
+		String lowWord = word.toLowerCase();
+		Word newWord = null;
+		Word removeWord = null;
+		
+		if (word.equals(""))
+		{
+			JOptionPane.showMessageDialog(null, "Please enter a word.");
+		}
+		else
+		{
+			newWord = new Word(lowWord);
+			
+			for (Word oldWord : custDictionary)
+			{
+				if (newWord.equals(oldWord)) 
+				{
+					removeWord = oldWord;
+				}
+			}
+			
+			if (removeWord != null)
+			{
+				custDictionary.remove(removeWord);
+				JOptionPane.showMessageDialog(null, "Removed from word bank: " 
+									+ removeWord);
+				findWordArea.setText("");
+				wordResults.setText("");
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(null, newWord + " is not in the word bank.");
+			}
 		}
 	}
 	
@@ -641,6 +778,14 @@ class DataWindow extends JFrame {
 			if (count == 0)
 			{
 				placeDictionary.add(newplace);
+				String lowPlace = newplace.getName().toLowerCase();
+				for (String text : procWords)
+				{
+					if (lowPlace.equals(text))
+					{
+						newplace.addFreq();
+					}	
+				}
 				JOptionPane.showMessageDialog(null, "Added to dictionary: " + newplace);
 				nameArea.setText("");
 				latArea.setText("");
@@ -704,8 +849,6 @@ class DataWindow extends JFrame {
 			
 				JOptionPane.showMessageDialog(null, newplace + "is not in the dictionary.");
 			}
-			
-			System.out.println(placeDictionary);
 		}
 	}
 	
@@ -825,6 +968,4 @@ class Word implements Comparable<Word> {
     }  
 }
 
-
-//file closing? when & how?
 
