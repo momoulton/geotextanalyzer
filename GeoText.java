@@ -36,13 +36,12 @@ class Window extends JFrame {
 	File file = null;
 	String year = null;
 	String fileTitle = null;
-	ArrayList<String> allWords = new ArrayList<String>();
-	ArrayList<String> procWords = new ArrayList<String>();
-	ArrayList<String> uniqueWords = new ArrayList<String>();
-	ArrayList<Word> wordFreqs = new ArrayList<Word>();
-	String[][] wordCounter;
-	int totalWords = 0;
-	int uniqueWordTotal = 0;
+	//ArrayList<String> allWords = new ArrayList<String>();
+	//ArrayList<String> procWords = new ArrayList<String>();
+	//ArrayList<String> uniqueWords = new ArrayList<String>();
+	//ArrayList<Word> wordFreqs = new ArrayList<Word>();
+	//int totalWords = 0;
+	//int uniqueWordTotal = 0;
 	
 	JPanel headerPanel = new JPanel();
 	JLabel greeting = new JLabel("Welcome to the GeoText Analyzer!");
@@ -163,14 +162,14 @@ class Window extends JFrame {
 		}
 		else
 		{
-			allWords = readData(file);
-			procWords = processWords(allWords);
-			uniqueWords = getUnique(procWords);
-			totalWords = procWords.size();
-			uniqueWordTotal = uniqueWords.size();
-			wordFreqs = countWords(procWords);
+			ArrayList<String> testWords = readData(file);
+			//procWords = processWords(allWords);
+			//uniqueWords = getUnique(procWords);
+			//totalWords = procWords.size();
+			//uniqueWordTotal = uniqueWords.size();
+			//wordFreqs = countWords(procWords);
 			
-			if (allWords.size() == 0)
+			if (testWords.size() == 0)
 			{
 				JOptionPane.showMessageDialog(null, "The file can't be read. Please try again.");
 			}
@@ -179,6 +178,7 @@ class Window extends JFrame {
 				DataWindow dataWindow = new DataWindow();
 				dataWindow.setVisible(true);
 			}
+			
 		}
 	}
 	
@@ -202,85 +202,20 @@ class Window extends JFrame {
 		}
 		
 		return allWords;
-	}
-	
-	private ArrayList<String> processWords(ArrayList<String> allWords)
-	{
-		String letterWord = "";
-		ArrayList<String> lowWords = new ArrayList<String>();
-		
-		for (String word : allWords)
-		{
-			String lowerWord = word.toLowerCase();
-			lowWords.add(lowerWord);
-		}
-		
-		for (String word: lowWords)
-		{
-			for (int i = 0; i < word.length(); i++)
-			{
-				if (Character.isLetterOrDigit(word.charAt(i)))
-				{
-					letterWord = letterWord + word.charAt(i);
-				}
-			}
-			
-			if (letterWord.length() > 0)
-			{
-				procWords.add(letterWord);
-			}
-			
-			letterWord = "";
-		}
-
-		return procWords;	
-	}
-	
-	private ArrayList<String> getUnique(ArrayList<String> procWords)
-	{
-		for (String word : procWords)
-		{
-			if (!uniqueWords.contains(word))
-			{
-				uniqueWords.add(word);
-			}
-		}
-		
-		return uniqueWords;
-	}
-	
-	private ArrayList<Word> countWords(ArrayList<String> procWords)
-	{
-		ArrayList<Word> wordFreqs = new ArrayList<Word>();
-		
-		for (String word : uniqueWords)
-		{
-			Word wordObj = new Word(word);
-			wordFreqs.add(wordObj);
-		}
-		
-		for (String word : procWords)
-		{
-			for (Word wordObj : wordFreqs)
-			{
-				if (word.equals(wordObj.getWord()))
-				{
-					wordObj.addFreq();
-				}			
-			}
-		}
-		
-		Collections.sort(wordFreqs);
-		return wordFreqs;
-	}
-	
-
-	
+	}	
 class DataWindow extends JFrame {
 	
 	String title = String.format("%s (%s)", fileTitle, year);
 	ArrayList<Place> placeDictionary = new ArrayList<Place>();
 	ArrayList<Word> custDictionary = new ArrayList<Word>();
+	
+	ArrayList<String> allWords = readData(file);
+	ArrayList<String> procWords = processWords(allWords);
+	ArrayList<String> uniqueWords = getUnique(procWords);
+	int totalWords = procWords.size();
+	int uniqueWordTotal = uniqueWords.size();
+	ArrayList<Word> wordFreqs = countWords(procWords);
+	
 	
 	JPanel textPanel = new JPanel();
 	JLabel textLabel = new JLabel("Text Analysis");
@@ -288,6 +223,9 @@ class DataWindow extends JFrame {
 	JLabel totalWordsLabel = new JLabel(Integer.toString(totalWords));
 	JLabel uniqueLabel = new JLabel("Unique Words: ");
 	JLabel uniqueWordsLabel = new JLabel(Integer.toString(uniqueWordTotal));
+	JButton properButton = new JButton("Get approximate list of proper nouns");
+	JTextArea properArea = new JTextArea();
+	JScrollPane properPane = new JScrollPane(properArea);
 	
 	JPanel top100Panel = new JPanel();
 	JLabel top100Label = new JLabel("All words by frequency");
@@ -339,9 +277,9 @@ class DataWindow extends JFrame {
 	
 	private void do_layout()
 	{	
-		textPanel.setLayout(new GridLayout(3,1));
+		textPanel.setLayout(new BorderLayout());
 		textPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-		textPanel.add(textLabel);
+		properArea.setEditable(false);
 		JPanel totalPanel = new JPanel();
 		totalPanel.setLayout(new FlowLayout());
 		totalPanel.add(totalLabel);
@@ -350,8 +288,17 @@ class DataWindow extends JFrame {
 		uniquePanel.setLayout(new FlowLayout());
 		uniquePanel.add(uniqueLabel);
 		uniquePanel.add(uniqueWordsLabel);
-		textPanel.add(totalPanel);
-		textPanel.add(uniquePanel);
+		JPanel figPanel = new JPanel();
+		figPanel.setLayout(new GridLayout(1,2));
+		figPanel.add(totalPanel);
+		figPanel.add(uniquePanel);
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new BorderLayout());
+		centerPanel.add(figPanel, BorderLayout.PAGE_START);
+		centerPanel.add(properPane, BorderLayout.CENTER);
+		centerPanel.add(properButton, BorderLayout.PAGE_END);
+		textPanel.add(textLabel, BorderLayout.PAGE_START);
+		textPanel.add(centerPanel, BorderLayout.CENTER);
 		
 		String allResults = displayResults(wordFreqs);
 		top100Panel.setLayout(new BorderLayout());
@@ -443,6 +390,12 @@ class DataWindow extends JFrame {
 	
 	private void do_plumbing()
 	{
+		properButton.addActionListener(new ActionListener() { 
+				public void actionPerformed(ActionEvent e) {
+					properButton_clicked();
+				}
+		} );
+		
 		saveAllButton.addActionListener(new ActionListener() { 
 				public void actionPerformed(ActionEvent e) {
 					saveAll_clicked();
@@ -502,6 +455,138 @@ class DataWindow extends JFrame {
 					del_clicked();
 				}
 		} );	
+	}
+	
+	
+	private ArrayList<String> processWords(ArrayList<String> allWords)
+	{
+		String letterWord = "";
+		ArrayList<String> lowWords = new ArrayList<String>();
+		ArrayList<String> procWords = new ArrayList<String>();
+		
+		for (String word : allWords)
+		{
+			String lowerWord = word.toLowerCase();
+			lowWords.add(lowerWord);
+		}
+		
+		for (String word: lowWords)
+		{
+			for (int i = 0; i < word.length(); i++)
+			{
+				if (Character.isLetterOrDigit(word.charAt(i)))
+				{
+					letterWord = letterWord + word.charAt(i);
+				}
+			}
+			
+			if (letterWord.length() > 0)
+			{
+				procWords.add(letterWord);
+			}
+			
+			letterWord = "";
+		}
+
+		return procWords;	
+	}
+	
+	private ArrayList<String> getUnique(ArrayList<String> procWords)
+	{
+		
+		ArrayList<String> uniqueWords = new ArrayList<String>();
+		for (String word : procWords)
+		{
+			if (!uniqueWords.contains(word))
+			{
+				uniqueWords.add(word);
+			}
+		}
+		
+		return uniqueWords;
+	}
+	
+	private ArrayList<Word> countWords(ArrayList<String> procWords)
+	{
+		ArrayList<Word> wordFreqs = new ArrayList<Word>();
+		
+		for (String word : uniqueWords)
+		{
+			Word wordObj = new Word(word);
+			wordFreqs.add(wordObj);
+		}
+		
+		for (String word : procWords)
+		{
+			for (Word wordObj : wordFreqs)
+			{
+				if (word.equals(wordObj.getWord()))
+				{
+					wordObj.addFreq();
+				}			
+			}
+		}
+		
+		Collections.sort(wordFreqs);
+		return wordFreqs;
+	}
+	
+	private void properButton_clicked()
+	{
+		ArrayList<String> words = allWords;
+		ArrayList<String> capWords = new ArrayList<String>();
+		ArrayList<String> properWords = new ArrayList<String>();
+		
+		for (int i = 0; i < words.size() - 1; i++)
+		{
+			String prevWord = words.get(i);
+			String word = words.get(i+1);
+			
+			if (prevWord.endsWith(".|?|!"))
+			{
+				String lowWord = word.toLowerCase();
+				words.set(i+1, lowWord);
+			}
+		}
+
+		
+		for (String word : words)
+		{
+			String letterWord = "";
+			for (int i = 0; i < word.length(); i++)
+			{
+				if (Character.isLetterOrDigit(word.charAt(i)))
+				{
+					letterWord = letterWord + word.charAt(i);
+				}
+			}
+			
+			if (letterWord.length() > 1)
+			{
+				if (Character.isUpperCase(letterWord.charAt(0)) && !Character.isUpperCase(letterWord.charAt(1)))
+				{
+					capWords.add(letterWord);
+				}
+				
+			}
+		}
+		
+		for (String word : capWords)
+		{
+			if (!properWords.contains(word))
+			{
+				properWords.add(word);
+			}
+		}
+		
+		String results = "";
+		
+		for (String word : properWords)
+		{
+			results = results + word + "\n";
+		}
+		
+		properArea.setText(results);
 	}
 	
 	private String displayResults(ArrayList<Word> wordFreqs)
