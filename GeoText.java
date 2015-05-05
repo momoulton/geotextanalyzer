@@ -144,6 +144,8 @@ class Window extends JFrame {
 			file = fc.getSelectedFile();
 			filename = fc.getSelectedFile().getName();
 			fileArea.setText(filename);
+			titleArea.setText("");
+			dateArea.setText("");
 		}		
 	}
 	
@@ -624,7 +626,7 @@ class DataWindow extends JFrame {
 			}
 		
 			double rate = ((double) freq / totalWords) * 100;
-			String results = String.format("Word: %s\n Total appearances: %d\n Percent of text: %.6f%%", 
+			String results = String.format("Word: %s\n Total: %d\n Percent of text: %.6f%%", 
 							word, freq, rate);
 		
 			wordResults.setText(results);
@@ -639,7 +641,7 @@ class DataWindow extends JFrame {
 		
 		for (Word word : custDictionary)
 		{
-			results = results + String.format("%s: %d appearances\n",
+			results = results + String.format("%s: %d\n",
 							word.getWord(), word.getFreq());
 		}
 			
@@ -650,13 +652,12 @@ class DataWindow extends JFrame {
 	{
 		runCust_clicked();
 		
-		String header = title;
-		String results = "Word,Frequency\n";
+		String results = "Word,Frequency,Title,Year\n";
 		
 		for (Word word : custDictionary)
 		{	
-			results = results + String.format("%s,%d\n",
-							word.getWord(), word.getFreq());	
+			results = results + String.format("%s,%d,%s,%s\n",
+							word.getWord(), word.getFreq(), fileTitle, year);	
 		}
 		
 		try
@@ -664,7 +665,6 @@ class DataWindow extends JFrame {
 			String outputName = "CustomTextResults.csv";
 			FileOutputStream os = new FileOutputStream(outputName);
 			PrintWriter pw = new PrintWriter(os);
-			pw.println(header);
 			pw.print(results);
 			pw.close();
 		}
@@ -683,7 +683,7 @@ class DataWindow extends JFrame {
 		
 		for (Place place : placeDictionary)
 		{
-			results = results + String.format("%s (%.2f, %.2f): %d appearances\n",
+			results = results + String.format("%s (%.2f, %.2f): %d\n",
 							place.getName(), place.getLat(), place.getLong(), place.getFreq());
 		}
 			
@@ -693,14 +693,13 @@ class DataWindow extends JFrame {
 	
 	private void saveAll_clicked()
 	{
-		String header = title;
-		String results = "Word,Frequency\n";
+		String results = "Word,Frequency,Title,Year\n";
 		
 		for (Word wordFreq : wordFreqs)
 		{
 			
-			results = results + String.format("%s,%d\n",
-							wordFreq.getWord(), wordFreq.getFreq());	
+			results = results + String.format("%s,%d,%s,%s\n",
+							wordFreq.getWord(), wordFreq.getFreq(), fileTitle, year);	
 		}
 		
 		try
@@ -708,7 +707,6 @@ class DataWindow extends JFrame {
 			String outputName = "AllWordTextResults.csv";
 			FileOutputStream os = new FileOutputStream(outputName);
 			PrintWriter pw = new PrintWriter(os);
-			pw.println(header);
 			pw.print(results);
 			pw.close();
 		}
@@ -723,12 +721,13 @@ class DataWindow extends JFrame {
 	private void saveGeo_clicked()
 	{
 		String header = title;
-		String results = "Place,Frequency,Latitude,Longitude\n";
+		String results = "Place,Frequency,Latitude,Longitude,Title,Year\n";
 		
 		for (Place place : placeDictionary)
 		{	
-			results = results + String.format("%s,%d,%.6f,%.6f\n",
-							place.getName(), place.getFreq(), place.getLat(), place.getLong());	
+			results = results + String.format("%s,%d,%.6f,%.6f,%s,%s\n",
+							place.getName(), place.getFreq(), place.getLat(), 
+							place.getLong(), fileTitle, year);	
 		}
 		
 		try
@@ -880,8 +879,6 @@ class DataWindow extends JFrame {
 			{
 				JOptionPane.showMessageDialog(null, "That place is already in the dictionary. Note: place names must be unique.");
 			}
-			
-			System.out.println(placeDictionary);
 		}
 	}
 	
@@ -893,9 +890,9 @@ class DataWindow extends JFrame {
 		Place newplace = null;
 		Place removePlace = null;
 		
-		if (nameArea.getText().trim().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
+		if (nameArea.getText().trim().equals(""))
 		{
-			JOptionPane.showMessageDialog(null, "Please enter values for all fields.");
+			JOptionPane.showMessageDialog(null, "Please enter a place name.");
 		}
 		else
 		{
