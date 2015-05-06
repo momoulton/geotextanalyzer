@@ -5,9 +5,10 @@
 // 8 May 2015
 
 /** 
- *  This class run the program GeoText Analysis. It invites the user to load
- * a plain-text file, then process and analyzes that file. Users can add to the
- * pre-loaded dictionary of geographical place names included in the analysis.
+ *  This class runs the program GeoText Analysis. It invites the user to load
+ * a plain-text file, then process and analyzes that file. Users can create
+ * customized dictionaries of words and place-names, then export their results
+ * in comma-separated-variable format.
  *
  * @author: Mo Moulton
  * @version: 8 May 2015
@@ -30,18 +31,17 @@ public class GeoText {
 	
 }
 
-class Window extends JFrame {
+/** 
+ *  This class sets up the initial window. It also contains the data-analysis
+ * window code as an inner class.
+**/
+
+class Window extends JFrame { 
 	
 	String filename = null;
 	File file = null;
 	String year = null;
 	String fileTitle = null;
-	//ArrayList<String> allWords = new ArrayList<String>();
-	//ArrayList<String> procWords = new ArrayList<String>();
-	//ArrayList<String> uniqueWords = new ArrayList<String>();
-	//ArrayList<Word> wordFreqs = new ArrayList<Word>();
-	//int totalWords = 0;
-	//int uniqueWordTotal = 0;
 	
 	JPanel headerPanel = new JPanel();
 	JLabel greeting = new JLabel("Welcome to the GeoText Analyzer!");
@@ -75,6 +75,10 @@ class Window extends JFrame {
 		do_layout();
 		do_plumbing();
 	}
+
+/**
+* This method does the layout of the initial window.
+**/
 	
 	private void do_layout()
 	{
@@ -119,7 +123,11 @@ class Window extends JFrame {
 		
 		this.pack();
 	}
-	
+
+/**
+* Links the two buttons to their business logic.
+**/
+
 	private void do_plumbing()
 	{
 		browseButton.addActionListener(new ActionListener() { 
@@ -134,56 +142,68 @@ class Window extends JFrame {
 				}
 		} );
 	}
+
 	
+/**
+* When the browse button is clicked, open a file browser. If the user chooses
+* a file, save the file's information in the relevant variables (file, filename)
+* and set up the intial window for easy entry of file's information.
+**/
 	private void browse_clicked()
 	{
 		JFileChooser fc = new JFileChooser();
 		int returnVal = fc.showOpenDialog(Window.this);
-		if (returnVal == JFileChooser.APPROVE_OPTION)
+		if (returnVal == JFileChooser.APPROVE_OPTION) //if this user chooses a file
 		{
 			file = fc.getSelectedFile();
 			filename = fc.getSelectedFile().getName();
 			fileArea.setText(filename);
-			titleArea.setText("");
+			titleArea.setText(""); //reset the title & date fields
 			dateArea.setText("");
 		}		
 	}
-	
+
+/**
+* When the analyze button is clicked, saves the file's information as entered.
+* Tests for presence and readability of file. If file can be analyzed, opens 
+* analysis window.
+**/
 	private void analyze_clicked()
 	{
 		year = dateArea.getText().trim();
 		fileTitle = titleArea.getText().trim();
 		
-		if (file == null || filename == null)
+		if (file == null || filename == null) //if there is no file, give warning
 		{
 			JOptionPane.showMessageDialog(null, "You haven't entered a file. Try again.");
 		}
-		else if (!file.exists())
+		else if (!file.exists()) //if file doesn't exist, give warning
 		{
 			JOptionPane.showMessageDialog(null, "That file doesn't exist. Try again.");
 		}
 		else
 		{
-			ArrayList<String> testWords = readData(file);
-			//procWords = processWords(allWords);
-			//uniqueWords = getUnique(procWords);
-			//totalWords = procWords.size();
-			//uniqueWordTotal = uniqueWords.size();
-			//wordFreqs = countWords(procWords);
+			ArrayList<String> testWords = readData(file); //try reading data
 			
-			if (testWords.size() == 0)
+			if (testWords.size() == 0) //if reading data produces no information, give warning
 			{
 				JOptionPane.showMessageDialog(null, "The file can't be read. Please try again.");
 			}
-			else
+			else //launch new analysis window
 			{
 				DataWindow dataWindow = new DataWindow();
 				dataWindow.setVisible(true);
-			}
-			
+			}	
 		}
 	}
-	
+
+/**
+* Reads in data from file, creating an ArrayList of tokens. The method uses both
+* whitespace and "-" as delimiters because hyphens often serve to delimit words in
+* English prose.
+* @param File file the selected file.
+* @return ArrayList<String> allWords containing all tokens in the file.
+**/
 	private ArrayList<String> readData(File file)
 	{
 		Scanner inFile = null;
@@ -193,32 +213,42 @@ class Window extends JFrame {
 		{
 			inFile = new Scanner(file).useDelimiter("-|\\s");
 		}
-		catch (IOException e)
+		catch (IOException e) //give warning of any i/o difficulties
 		{
 			JOptionPane.showMessageDialog(null, "There's a problem with the file. Please try again.");
 		}
 		
-		while (inFile.hasNext())
+		while (inFile.hasNext()) //add tokens to ArrayList
 		{
 			allWords.add(inFile.next());
 		}
 		
 		return allWords;
 	}	
+
+/**
+* This inner class launches the analysis window for a given file. Note that the
+* program can launch multiple such windows per session, while only one initial
+* window is launched per session.
+**/
 class DataWindow extends JFrame {
 	
-	String title = String.format("%s (%s)", fileTitle, year);
-	ArrayList<Place> placeDictionary = new ArrayList<Place>();
-	ArrayList<Word> custDictionary = new ArrayList<Word>();
+	String title = String.format("%s (%s)", fileTitle, year); //for window header
 	
-	ArrayList<String> allWords = readData(file);
-	ArrayList<String> procWords = processWords(allWords);
-	ArrayList<String> uniqueWords = getUnique(procWords);
-	int totalWords = procWords.size();
-	int uniqueWordTotal = uniqueWords.size();
-	ArrayList<Word> wordFreqs = countWords(procWords);
+	// the main analysis is called here, with results stored in variables initialized here
+	// this runs the analysis once per window-creation
+	ArrayList<Place> placeDictionary = new ArrayList<Place>(); //custom dictionary of places
+	ArrayList<Word> custDictionary = new ArrayList<Word>(); //custom word bank
+	ArrayList<String> allWords = readData(file); //creates an ArrayList of all the words
+	ArrayList<String> procWords = processWords(allWords); //creates an ArrayList of processed words
+	ArrayList<String> uniqueWords = getUnique(procWords); //creates an ArrayList of unique words
+	int totalWords = procWords.size(); //count total words
+	int uniqueWordTotal = uniqueWords.size(); //count unique words
+	ArrayList<Word> wordFreqs = countWords(procWords); //creates an ArrayList of Word objects
+														//storing words & frequencies
 	
-	
+	//initialize window widgets
+	//for the text analysis & proper nouns area
 	JPanel textPanel = new JPanel();
 	JLabel textLabel = new JLabel("Text Analysis");
 	JLabel totalLabel = new JLabel("Total Words: ");
@@ -229,12 +259,14 @@ class DataWindow extends JFrame {
 	JTextArea properArea = new JTextArea();
 	JScrollPane properPane = new JScrollPane(properArea);
 	
+	//for the all-words area
 	JPanel top100Panel = new JPanel();
 	JLabel top100Label = new JLabel("All words by frequency");
 	JButton saveAllButton = new JButton("Save as CSV File");
 	JTextArea top100Area = new JTextArea();
 	JScrollPane top100Pane = new JScrollPane(top100Area);
 	
+	//for the search & build word bank area
 	JPanel freqPanel = new JPanel();
 	JButton findButton = new JButton("Find Frequency");
 	JLabel freqLabel = new JLabel("Word Search & Build Custom Word Bank");
@@ -246,6 +278,7 @@ class DataWindow extends JFrame {
 	JButton addWord = new JButton("Add to Custom Word Bank");
 	JButton delWord = new JButton("Delete from Custom Word Bank");
 	
+	//for the presentation and saving of custom word bank area
 	JPanel custPanel = new JPanel();
 	JLabel custLabel = new JLabel("Custom Word Bank");
 	JTextArea custArea = new JTextArea();
@@ -253,6 +286,7 @@ class DataWindow extends JFrame {
 	JButton runCust = new JButton("Run Analysis");
 	JButton saveCust = new JButton("Save as CSV File");
 	
+	//for the presentation and saving of place name area
 	JPanel geoPanel = new JPanel();
 	JLabel geoLabel = new JLabel("Place Name Analysis");
 	JButton runGeo = new JButton("Run Analysis");
@@ -260,6 +294,7 @@ class DataWindow extends JFrame {
 	JScrollPane geoPane = new JScrollPane(geoData);
 	JButton saveGeo = new JButton("Save as CSV File");
 	
+	//for the customization of place name dictionary area
 	JPanel dictPanel = new JPanel();
 	JLabel dictLabel = new JLabel("Customize the Place Name Dictionary");
 	JButton addButton = new JButton("Add this place");
@@ -277,8 +312,12 @@ class DataWindow extends JFrame {
 		do_plumbing();
 	}
 	
+/**
+* This method does the layout of the analysis window.
+**/	
 	private void do_layout()
 	{	
+		//for the text analysis and proper-nouns area
 		textPanel.setLayout(new BorderLayout());
 		textPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		properArea.setEditable(false);
@@ -302,6 +341,7 @@ class DataWindow extends JFrame {
 		textPanel.add(textLabel, BorderLayout.PAGE_START);
 		textPanel.add(centerPanel, BorderLayout.CENTER);
 		
+		//for the area displaying all words & frequencies
 		String allResults = displayResults(wordFreqs);
 		top100Panel.setLayout(new BorderLayout());
 		top100Panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -311,6 +351,7 @@ class DataWindow extends JFrame {
 		top100Panel.add(top100Pane, BorderLayout.CENTER);
 		top100Panel.add(saveAllButton, BorderLayout.PAGE_END);
 		
+		//for the word search & word bank customization area
 		wordFind.setLayout(new BorderLayout());
 		wordFind.add(findWordLabel, BorderLayout.LINE_START);
 		wordFind.add(findWordArea, BorderLayout.CENTER);
@@ -327,6 +368,7 @@ class DataWindow extends JFrame {
 		wordResults.setEditable(false);
 		freqPanel.add(freqPane, BorderLayout.CENTER);
 		
+		//for the area displaying & saving custom word bank data
 		custPanel.setLayout(new BorderLayout());
 		custPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		custPanel.add(custLabel, BorderLayout.PAGE_START);
@@ -338,6 +380,7 @@ class DataWindow extends JFrame {
 		custButtons.add(saveCust);
 		custPanel.add(custButtons, BorderLayout.PAGE_END);
 		
+		//for the area displaying & saving custom place name dictionary data
 		geoData.setEditable(false);
 		geoPanel.setLayout(new BorderLayout());
 		geoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -349,6 +392,7 @@ class DataWindow extends JFrame {
 		geoButtons.add(saveGeo);
 		geoPanel.add(geoButtons, BorderLayout.PAGE_END);
 		
+		//for the customization of place name dictionary area
 		dictPanel.setLayout(new BorderLayout());
 		dictPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 		JPanel enterAddData = new JPanel();
@@ -376,6 +420,7 @@ class DataWindow extends JFrame {
 		dictPanel.add(enterAddData, BorderLayout.CENTER);
 		dictPanel.add(dictButtons, BorderLayout.PAGE_END);
 		
+		//put it all together
 		this.setTitle(title);
 		this.setLocationRelativeTo(null);
 		this.setLayout(new GridLayout(3,3));
@@ -389,7 +434,9 @@ class DataWindow extends JFrame {
 		
 		this.pack();
 	}
-	
+/**
+* This method connects the analysis buttons with their respective business logic.
+*/
 	private void do_plumbing()
 	{
 		properButton.addActionListener(new ActionListener() { 
@@ -459,20 +506,24 @@ class DataWindow extends JFrame {
 		} );	
 	}
 	
-	
+/**
+* This method converts words to lower case and removes punctuation.
+* @param ArrayList<String> allWords all the tokens from the file
+* @return ArrayList<String> procWords processed tokens ready for analysis
+**/
 	private ArrayList<String> processWords(ArrayList<String> allWords)
 	{
 		String letterWord = "";
 		ArrayList<String> lowWords = new ArrayList<String>();
 		ArrayList<String> procWords = new ArrayList<String>();
 		
-		for (String word : allWords)
+		for (String word : allWords) //convert all uppercase to lowercase
 		{
 			String lowerWord = word.toLowerCase();
 			lowWords.add(lowerWord);
 		}
 		
-		for (String word: lowWords)
+		for (String word: lowWords) //remove punctuation
 		{
 			for (int i = 0; i < word.length(); i++)
 			{
@@ -492,14 +543,18 @@ class DataWindow extends JFrame {
 
 		return procWords;	
 	}
-	
+
+/**
+* This method produces an ArrayList of only unique words, removing duplicates.
+* @param ArrayList<String> procWords the processed words (lowercase, no punctuation)
+* @return ArrayList<String> uniqueWords procWords with duplicates removed
+**/
 	private ArrayList<String> getUnique(ArrayList<String> procWords)
-	{
-		
+	{	
 		ArrayList<String> uniqueWords = new ArrayList<String>();
-		for (String word : procWords)
+		for (String word : procWords) //for each word in procWords
 		{
-			if (!uniqueWords.contains(word))
+			if (!uniqueWords.contains(word)) //add only if it's not already in uniqueWords 
 			{
 				uniqueWords.add(word);
 			}
@@ -507,55 +562,66 @@ class DataWindow extends JFrame {
 		
 		return uniqueWords;
 	}
-	
+
+/** 
+* This method produces an ArrayList of Word objects, which contain the word
+* itself and its frequency in the file.
+* @param ArrayList<String> procWords the processed words
+* @return ArrayList<Word> wordFreqs the Word objects
+**/
 	private ArrayList<Word> countWords(ArrayList<String> procWords)
 	{
 		ArrayList<Word> wordFreqs = new ArrayList<Word>();
 		
-		for (String word : uniqueWords)
+		for (String word : uniqueWords) //create a new Word object for each unique word
 		{
 			Word wordObj = new Word(word);
 			wordFreqs.add(wordObj);
 		}
 		
-		for (String word : procWords)
+		for (String word : procWords) //count how many times the word appears
 		{
 			for (Word wordObj : wordFreqs)
 			{
 				if (word.equals(wordObj.getWord()))
 				{
-					wordObj.addFreq();
+					wordObj.addFreq(); //add the the frequency count
 				}			
 			}
 		}
 		
-		Collections.sort(wordFreqs);
+		Collections.sort(wordFreqs); //sort in order of frequency
 		return wordFreqs;
 	}
-	
+
+/**
+* This method produces a rough guess at a list of proper nouns in a file.
+* It does this by returning capitalized words except for those that are at the 
+* start of a sentence according to a rough algorithm. It prints the results to
+* relevant JTextArea in the analysis window.
+**/
 	private void properButton_clicked()
 	{
-		ArrayList<String> words = allWords;
-		ArrayList<String> capWords = new ArrayList<String>();
-		ArrayList<String> properWords = new ArrayList<String>();
+		ArrayList<String> words = allWords; //create new version of allWords that can be modified harmlessly
+		ArrayList<String> capWords = new ArrayList<String>(); //capitalized words
+		ArrayList<String> properWords = new ArrayList<String>(); //proper nouns
 		
 		for (int i = 0; i < words.size() - 1; i++)
 		{
 			String prevWord = words.get(i);
 			String word = words.get(i+1);
 			
-			if (prevWord.endsWith(".|?|!"))
-			{
+			if (prevWord.endsWith(".|?|!")) //if a word follows this puntuation mark
+			{ 								//set it to lower case
 				String lowWord = word.toLowerCase();
 				words.set(i+1, lowWord);
 			}
 		}
-
-		
-		for (String word : words)
+	
+		for (String word : words) //for each word
 		{
 			String letterWord = "";
-			for (int i = 0; i < word.length(); i++)
+			for (int i = 0; i < word.length(); i++) //remove punctuation
 			{
 				if (Character.isLetterOrDigit(word.charAt(i)))
 				{
@@ -563,19 +629,19 @@ class DataWindow extends JFrame {
 				}
 			}
 			
-			if (letterWord.length() > 1)
+			if (letterWord.length() > 1) //if the word starts with a capital letter
+										//but is not ALLCAPS
 			{
 				if (Character.isUpperCase(letterWord.charAt(0)) && !Character.isUpperCase(letterWord.charAt(1)))
 				{
-					capWords.add(letterWord);
-				}
-				
+					capWords.add(letterWord); //add it to the capitalized words ArrayList
+				}	
 			}
 		}
 		
-		for (String word : capWords)
+		for (String word : capWords) //for each capitalized word
 		{
-			if (!properWords.contains(word))
+			if (!properWords.contains(word)) //add it exactly once to the the proper words ArrayList
 			{
 				properWords.add(word);
 			}
@@ -583,14 +649,19 @@ class DataWindow extends JFrame {
 		
 		String results = "";
 		
-		for (String word : properWords)
+		for (String word : properWords) //create attractive results format
 		{
 			results = results + word + "\n";
 		}
 		
-		properArea.setText(results);
+		properArea.setText(results); //put results in window text area
 	}
-	
+
+/**
+* This method displays attractive results from an ArrayList of Word objects.
+* @param ArrayList<Word> wordFreqs
+* @return String results
+**/
 	private String displayResults(ArrayList<Word> wordFreqs)
 	{
 		String results = "";
@@ -603,19 +674,23 @@ class DataWindow extends JFrame {
 		
 		return results;
 	}
-	
+
+/**
+* This method rapidly calculates the frequency of a given inputted word
+* and prints the results to the window in response to a button click.
+**/
 	private void find_clicked()
 	{
-		String word = findWordArea.getText().trim();
-		String lowWord = word.toLowerCase();
+		String word = findWordArea.getText().trim(); //get the inputted word
+		String lowWord = word.toLowerCase(); // set it to lower case
 		int freq = 0;
 		
-		if (word.equals(""))
+		if (word.equals("")) //if no text was entered
 		{
-			JOptionPane.showMessageDialog(null, 
+			JOptionPane.showMessageDialog(null, //generate warning
 				"Please enter a word.");
 		}
-		else
+		else //count frequencies
 		{
 			for (String text : procWords)
 			{
@@ -625,42 +700,49 @@ class DataWindow extends JFrame {
 				}
 			}
 		
-			double rate = ((double) freq / totalWords) * 100;
+			double rate = ((double) freq / totalWords) * 100; //calculate rate
 			String results = String.format("Word: %s\n Total: %d\n Percent of text: %.6f%%", 
 							word, freq, rate);
-		
-			wordResults.setText(results);
+			wordResults.setText(results); //print formatted results to text area
 		}
 	}
-	
+
+/**
+* This method displays the frequencies of the custom word bank words in the 
+* relevant analysis window text area.
+*/
 	private void runCust_clicked()
 	{
 		String results = "";
 
-		Collections.sort(custDictionary);
+		Collections.sort(custDictionary); //order the custom dictionary of Word objects
 		
-		for (Word word : custDictionary)
+		for (Word word : custDictionary) //write results
 		{
 			results = results + String.format("%s: %d\n",
 							word.getWord(), word.getFreq());
 		}
 			
-		custArea.setText(results);
+		custArea.setText(results); //set text area to the results
 	}
-	
+
+/**
+* This method saves the custom word bank frequency data as a CSV file in the 
+* user's working directory.
+**/
 	private void saveCust_clicked()
 	{
-		runCust_clicked();
+		runCust_clicked(); //to ensure no discrepancy between displayed & saved data
 		
-		String results = "Word,Frequency,Title,Year\n";
+		String results = "Word,Frequency,Title,Year\n"; //file's header line
 		
-		for (Word word : custDictionary)
+		for (Word word : custDictionary) //results string contains each word's data
 		{	
 			results = results + String.format("%s,%d,%s,%s\n",
 							word.getWord(), word.getFreq(), fileTitle, year);	
 		}
 		
-		try
+		try //file output
 		{
 			String outputName = "CustomTextResults.csv";
 			FileOutputStream os = new FileOutputStream(outputName);
@@ -668,41 +750,47 @@ class DataWindow extends JFrame {
 			pw.print(results);
 			pw.close();
 		}
-		catch (IOException e)
+		catch (IOException e) //display warning if there's an i/o problem
 		{
 			JOptionPane.showMessageDialog(null, 
 				"There's a problem with the file. Please try again.");
 		}
 	}
-	
+
+/**
+* This method displays the frequencies of each place in the custom place dictionary.
+**/
 	private void runGeo_clicked()
 	{
 		String results = "";
 		
-		Collections.sort(placeDictionary);
+		Collections.sort(placeDictionary); //put in order of frequency
 		
-		for (Place place : placeDictionary)
+		for (Place place : placeDictionary) //write results for each place
 		{
 			results = results + String.format("%s (%.2f, %.2f): %d\n",
 							place.getName(), place.getLat(), place.getLong(), place.getFreq());
 		}
 			
-		geoData.setText(results);
-		
+		geoData.setText(results); //set the text area equal to the results	
 	}
-	
+
+/**
+* This method saves the full list of unique words & their frequencies in a CSV file in the 
+* user's working directory.
+*/
 	private void saveAll_clicked()
 	{
-		String results = "Word,Frequency,Title,Year\n";
+		String results = "Word,Frequency,Title,Year\n"; //file header
 		
-		for (Word wordFreq : wordFreqs)
+		for (Word wordFreq : wordFreqs) //write results for each Word object
 		{
 			
 			results = results + String.format("%s,%d,%s,%s\n",
 							wordFreq.getWord(), wordFreq.getFreq(), fileTitle, year);	
 		}
 		
-		try
+		try //file output
 		{
 			String outputName = "AllWordTextResults.csv";
 			FileOutputStream os = new FileOutputStream(outputName);
@@ -710,93 +798,100 @@ class DataWindow extends JFrame {
 			pw.print(results);
 			pw.close();
 		}
-		catch (IOException e)
+		catch (IOException e) //display warning in case of i/o problem
 		{
 			JOptionPane.showMessageDialog(null, 
 				"There's a problem with the file. Please try again.");
 		}
 	}
 	
-	
+/**
+* This method saves the place name dictionary results in a CSV file in the 
+* user's working directory.
+**/
 	private void saveGeo_clicked()
 	{
-		String header = title;
-		String results = "Place,Frequency,Latitude,Longitude,Title,Year\n";
+		String results = "Place,Frequency,Latitude,Longitude,Title,Year\n"; //file header
 		
-		for (Place place : placeDictionary)
+		for (Place place : placeDictionary) //create result line for each Place object
 		{	
 			results = results + String.format("%s,%d,%.6f,%.6f,%s,%s\n",
 							place.getName(), place.getFreq(), place.getLat(), 
 							place.getLong(), fileTitle, year);	
 		}
 		
-		try
+		try //file output
 		{
 			String outputName = "GeoTextResults.csv";
 			FileOutputStream os = new FileOutputStream(outputName);
 			PrintWriter pw = new PrintWriter(os);
-			pw.println(header);
 			pw.print(results);
 			pw.close();
 		}
-		catch (IOException e)
+		catch (IOException e) //display warning in case of i/o problem
 		{
 			JOptionPane.showMessageDialog(null, 
 				"There's a problem with the file. Please try again.");
 		}
 	}
-	
+
+/**
+* This method adds a Word to the custom word bank.
+*/
 	private void addWord_clicked()
 	{	
-		String word = findWordArea.getText().trim();
-		String lowWord = word.toLowerCase();
+		String word = findWordArea.getText().trim(); //get inputted word
+		String lowWord = word.toLowerCase(); //create lowercae version
 		Word newWord = null;
 		
-		if (word.equals(""))
+		if (word.equals("")) //if no text input, display warning
 		{
 			JOptionPane.showMessageDialog(null, "Please enter a word.");
 		}
 		else
 		{
-			newWord = new Word(lowWord);
+			newWord = new Word(lowWord); //create new Word object
 
 			int count = 0;
 			
-			for (Word oldWord : custDictionary)
+			for (Word oldWord : custDictionary) //is the word in the dictionary already?
 			{
 				if (newWord.equals(oldWord)) count++;
 			}
 					
-		
-			if (count == 0)
+			if (count == 0) //if not, add it
 			{
 				custDictionary.add(newWord);
-				for (String text: procWords)
-				{
+				for (String text: procWords) //and count its frequency in the file
+				{                            //and add that to the Word object
 					if (lowWord.equals(text))
 					{
-						newWord.addFreq();
+						newWord.addFreq(); 
 					}
 				}
+				//display confirmation message & reset the entry areas
 				JOptionPane.showMessageDialog(null, "Added to word bank: " + word);
 				findWordArea.setText("");
 				wordResults.setText("");	
 			}
-			else
+			else //display message instead
 			{
 				JOptionPane.showMessageDialog(null, "That word is already in the word bank.");
 			}
 		}
 	}
-	
+
+/**
+* This method deletes a word from the custom word bank.
+**/
 	private void delWord_clicked()
 	{
-		String word = findWordArea.getText().trim();
-		String lowWord = word.toLowerCase();
+		String word = findWordArea.getText().trim(); //get inputted word
+		String lowWord = word.toLowerCase(); //set to lowercase
 		Word newWord = null;
 		Word removeWord = null;
 		
-		if (word.equals(""))
+		if (word.equals("")) //if no text entered, display warning
 		{
 			JOptionPane.showMessageDialog(null, "Please enter a word.");
 		}
@@ -804,29 +899,33 @@ class DataWindow extends JFrame {
 		{
 			newWord = new Word(lowWord);
 			
-			for (Word oldWord : custDictionary)
+			for (Word oldWord : custDictionary) //if word is in the dictionary
 			{
 				if (newWord.equals(oldWord)) 
 				{
-					removeWord = oldWord;
+					removeWord = oldWord; //save it in removeWord variable
 				}
 			}
 			
-			if (removeWord != null)
+			if (removeWord != null) //if there's a word to remove
 			{
-				custDictionary.remove(removeWord);
+				custDictionary.remove(removeWord); //remove it
+				//display confirmation & reset text entry areas
 				JOptionPane.showMessageDialog(null, "Removed from word bank: " 
 									+ removeWord);
 				findWordArea.setText("");
 				wordResults.setText("");
 			}
-			else
+			else //there's no word to remove. Display message instead.
 			{
 				JOptionPane.showMessageDialog(null, newWord + " is not in the word bank.");
 			}
 		}
 	}
-	
+
+/**
+* This method adds a place to the place dictionary.
+**/
 	private void add_clicked()
 	{	
 		String name = null;
@@ -834,109 +933,106 @@ class DataWindow extends JFrame {
 		double longitude = 0;
 		Place newplace = null;
 		
-		if (nameArea.getText().trim().equals("") || latArea.getText().equals("") || longArea.getText().equals(""))
+		if (nameArea.getText().trim().equals("") || latArea.getText().equals("") 
+					|| longArea.getText().equals("")) //if fields are empty, display warning
 		{
 			JOptionPane.showMessageDialog(null, "Please enter values for all fields.");
 		}
 		else
 		{
-			try 
+			try //set variable equal to relevant text entry
 			{
 				name = nameArea.getText().trim();
 				latitude = Double.parseDouble(latArea.getText());
 				longitude = Double.parseDouble(longArea.getText());
 				newplace = new Place(name, latitude, longitude);
 			}
-			catch (NumberFormatException e)
+			catch (NumberFormatException e) //catch if non-numbers entered for lat & long
 			{
 				JOptionPane.showMessageDialog(null, "Please enter numbers only for latitude and longitude.");
 			}
 			
-			int count = 0;
+			int count = 0; 
 			
-			for (Place place : placeDictionary)
+			for (Place place : placeDictionary) //is the place already in the dictionary?
 			{
 				if (newplace.equals(place)) count++;
 			}
 			
-			if (count == 0)
+			if (count == 0) //if not, add it
 			{
 				placeDictionary.add(newplace);
 				String lowPlace = newplace.getName().toLowerCase();
-				for (String text : procWords)
+				for (String text : procWords) //count frequencies & add them to Place object
 				{
 					if (lowPlace.equals(text))
 					{
 						newplace.addFreq();
 					}	
 				}
+				//display confirmation message & reset text entry areas
 				JOptionPane.showMessageDialog(null, "Added to dictionary: " + newplace);
 				nameArea.setText("");
 				latArea.setText("");
 				longArea.setText("");	
 			}
-			else
+			else //display message instead if place is already in dictionary
 			{
-				JOptionPane.showMessageDialog(null, "That place is already in the dictionary. Note: place names must be unique.");
+				JOptionPane.showMessageDialog(null, "That place is already in the dictionary.");
 			}
 		}
 	}
-	
+
+/**
+* This method removes a place from the place dictionary. 
+**/
 	private void del_clicked()
 	{
 		String name = null;
-		double latitude = 0;
-		double longitude = 0;
+		double latitude = 0; //this is just a placeholder; name is only relevant field here
+		double longitude = 0; //user entry in lat & long areas will be ignored in this method
 		Place newplace = null;
 		Place removePlace = null;
 		
-		if (nameArea.getText().trim().equals(""))
+		if (nameArea.getText().trim().equals("")) //if no text entered, display warning
 		{
 			JOptionPane.showMessageDialog(null, "Please enter a place name.");
 		}
 		else
 		{
-			try 
-			{
-				name = nameArea.getText().trim();
-				latitude = Double.parseDouble(latArea.getText());
-				longitude = Double.parseDouble(longArea.getText());
-				newplace = new Place(name, latitude, longitude);
-			}
-			catch (NumberFormatException e)
-			{
-				JOptionPane.showMessageDialog(null, "Please enter numbers only for latitude and longitude.");
-			}
-			
+			name = nameArea.getText().trim();
+			newplace = new Place(name, latitude, longitude);
 			
 			for (Place place : placeDictionary)
 			{
-				if (newplace.equals(place))
+				if (newplace.equals(place)) //if place is in dictionary
 				{
-					removePlace = place;
+					removePlace = place; //set removePlace variable equal to it
 				}
 			}
 			
-			if (removePlace != null)
+			if (removePlace != null) //if there's a place to remove
 			{
-				placeDictionary.remove(removePlace);
+				placeDictionary.remove(removePlace); //remove it
+				//display confirmation message & reset text entry areas
 				JOptionPane.showMessageDialog(null, "Removed from dictionary: " 
 									+ removePlace);
 				nameArea.setText("");
 				latArea.setText("");
 				longArea.setText("");
 			}
-			else
+			else //display message instead
 			{
-			
 				JOptionPane.showMessageDialog(null, newplace + "is not in the dictionary.");
 			}
 		}
-	}
-	
+	}	
 }
 }
 
+/**
+* This class create the Place object.
+**/
 
 class Place implements Comparable<Place> {
 	
@@ -957,8 +1053,12 @@ class Place implements Comparable<Place> {
 		this.longitude = longitude;
 		freq = 0;
 	}
-	
-	public boolean equals(Place that)
+
+/**
+* This method overrides the Object equals() method and defines equality solely
+* in terms of name.
+**/
+	public boolean equals(Place that) 
 	{
 		return this.name.equals(that.name);
 	}
@@ -987,12 +1087,19 @@ class Place implements Comparable<Place> {
 	{
 		return name + "," + latitude + "," + longitude;
 	}
-	
+
+/**
+* This method allows users to increment the frequency.
+**/
 	public void addFreq()
 	{
 		freq++;
 	}
-	
+
+/**
+* This method defines Place comparability in terms of frequency.
+* @param Place that
+**/
 	public int compareTo(Place that)
 	{
         if  (this.freq < that.freq)  return 1;
@@ -1001,6 +1108,9 @@ class Place implements Comparable<Place> {
     }  
 }
 
+/**
+* This class creates the Word object.
+*/
 class Word implements Comparable<Word> {
 	
 	private String word;
@@ -1016,7 +1126,11 @@ class Word implements Comparable<Word> {
 		this.word = word;
 		freq = 0;
 	}
-	
+
+/**
+* This method overrides the Object equals() method and defines equality solely
+* in terms of name.
+**/	
 	public boolean equals(Word that)
 	{
 		return this.word.equals(that.word);
@@ -1036,12 +1150,19 @@ class Word implements Comparable<Word> {
 	{
 		return word;
 	}
-	
+
+/**
+* This method allows users to increment the frequency.
+**/	
 	public void addFreq()
 	{
 		freq++;
 	}
-	
+
+/**
+* This method defines Word comparability in terms of frequency.
+* @param Word that
+**/	
 	public int compareTo(Word that)
 	{
         if  (this.freq < that.freq)  return 1;
